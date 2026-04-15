@@ -8,48 +8,14 @@
     @preconcurrency import CHDF5
 #endif
 
-open class FloatAttribute: Attribute {
+public typealias FloatAttribute = TypedAttribute<Float>
 
-    public func read() throws -> [Float] {
-        let space = self.space
-        let count = space.size
-        var data = [Float](repeating: 0, count: count)
-        try data.withUnsafeMutableBufferPointer { pointer in
-            return try read(into: pointer.baseAddress!, type: .float)
-        }
-        return data
+extension GroupType {
+    public func createFloatAttribute(_ name: String, dataspace: Dataspace) -> FloatAttribute? {
+        return createAttribute(name, dataspace: dataspace)
     }
 
-    public func write(_ data: [Float]) throws {
-        assert(space.size == data.count)
-        try data.withUnsafeBufferPointer { pointer in
-            try write(from: pointer.baseAddress!, type: .float)
-        }
-    }
-
-}
-
-
-public extension GroupType {
-    /// Creates a `Float` attribute.
-    func createFloatAttribute(_ name: String, dataspace: Dataspace) -> FloatAttribute? {
-        guard let datatype = Datatype(type: Float.self) else {
-            return nil
-        }
-        let attributeID = name.withCString { name in
-            return H5Acreate2(id, name, datatype.id, dataspace.id, 0, 0)
-        }
-        return FloatAttribute(id: attributeID)
-    }
-
-    /// Opens a `Float` attribute.
-    func openFloatAttribute(_ name: String) -> FloatAttribute? {
-        let attributeID = name.withCString{ name in
-            return H5Aopen(id, name, 0)
-        }
-        guard attributeID >= 0 else {
-            return nil
-        }
-        return FloatAttribute(id: attributeID)
+    public func openFloatAttribute(_ name: String) -> FloatAttribute? {
+        return openAttribute(name)
     }
 }

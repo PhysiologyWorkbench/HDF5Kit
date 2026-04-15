@@ -8,48 +8,14 @@
     @preconcurrency import CHDF5
 #endif
 
-open class DoubleAttribute: Attribute {
+public typealias DoubleAttribute = TypedAttribute<Double>
 
-    public func read() throws -> [Double] {
-        let space = self.space
-        let count = space.size
-        var data = [Double](repeating: 0, count: count)
-        try data.withUnsafeMutableBufferPointer { pointer in
-            return try read(into: pointer.baseAddress!, type: .double)
-        }
-        return data
+extension GroupType {
+    public func createDoubleAttribute(_ name: String, dataspace: Dataspace) -> DoubleAttribute? {
+        return createAttribute(name, dataspace: dataspace)
     }
 
-    public func write(_ data: [Double]) throws {
-        assert(space.size == data.count)
-        try data.withUnsafeBufferPointer { pointer in
-            try write(from: pointer.baseAddress!, type: .double)
-        }
-    }
-
-}
-
-
-public extension GroupType {
-    /// Creates a `Double` attribute.
-    func createDoubleAttribute(_ name: String, dataspace: Dataspace) -> DoubleAttribute? {
-        guard let datatype = Datatype(type: Double.self) else {
-            return nil
-        }
-        let attributeID = name.withCString { name in
-            return H5Acreate2(id, name, datatype.id, dataspace.id, 0, 0)
-        }
-        return DoubleAttribute(id: attributeID)
-    }
-
-    /// Opens a `Double` attribute.
-    func openDoubleAttribute(_ name: String) -> DoubleAttribute? {
-        let attributeID = name.withCString{ name in
-            return H5Aopen(id, name, 0)
-        }
-        guard attributeID >= 0 else {
-            return nil
-        }
-        return DoubleAttribute(id: attributeID)
+    public func openDoubleAttribute(_ name: String) -> DoubleAttribute? {
+        return openAttribute(name)
     }
 }

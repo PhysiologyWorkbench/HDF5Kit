@@ -8,8 +8,9 @@
     @preconcurrency import CHDF5
 #endif
 
-public class StringDataset: Dataset {
-    public subscript(slices: HyperslabIndexType...) -> [String] {
+@HDF5Actor
+public class StringDataset: TypedDataset<String> {
+    public override subscript(slices: HyperslabIndexType...) -> [String] {
         get {
             return (try? read(slices)) ?? []
         }
@@ -18,7 +19,7 @@ public class StringDataset: Dataset {
         }
     }
 
-    public subscript(slices: [HyperslabIndexType]) -> [String] {
+    public override subscript(slices: [HyperslabIndexType]) -> [String] {
         get {
             return (try? read(slices)) ?? []
         }
@@ -26,35 +27,20 @@ public class StringDataset: Dataset {
             try! write(newValue, to: slices)
         }
     }
-    
-    public func read(_ slices: [HyperslabIndexType]) throws -> [String] {
+
+    public override func read(_ slices: [HyperslabIndexType]) throws -> [String] {
         let filespace = space
         filespace.select(slices)
-        return try read(fileSpace: filespace)
+        return try read(memSpace: nil, fileSpace: filespace)
     }
 
-    public func write(_ data: [String], to slices: [HyperslabIndexType]) throws {
+    public override func write(_ data: [String], to slices: [HyperslabIndexType]) throws {
         let filespace = space
         filespace.select(slices)
-        try write(data, fileSpace: filespace)
+        try write(data, memSpace: nil, fileSpace: filespace)
     }
 
-    /// Append data to the table
-    public func append(_ data: [String], dimensions: [Int]) throws {
-        let oldExtent = extent
-        extent[0] += dimensions[0]
-
-        var start = [Int](repeating: 0, count: oldExtent.count)
-        start[0] = oldExtent[0]
-
-        let fileSpace = space
-        fileSpace.select(start: start, stride: nil, count: dimensions, block: nil)
-
-        try write(data, fileSpace: fileSpace)
-    }
-
-    /// Read string data using an optional file Dataspace
-    public func read(fileSpace: Dataspace? = nil) throws -> [String] {
+    public override func read(memSpace: Dataspace? = nil, fileSpace: Dataspace? = nil) throws -> [String] {
         if type.isVariableLengthString {
             return try readVariableLength(fileSpace: fileSpace)
         } else {
@@ -123,12 +109,11 @@ public class StringDataset: Dataset {
         }
     }
 
-    /// Write string data using an optional file Dataspace
-    ///
-    /// - precondition: The `selectionSize` of the file Dataspace is equal to `strings.count`
-    public func write(_ strings: [String], fileSpace: Dataspace? = nil) throws {
+    public override func write(_ strings: [String], memSpace: Dataspace? = nil, fileSpace: Dataspace? = nil) throws {
         let size: Int
-        if let fileSpace = fileSpace {
+        if let memSpace = memSpace {
+            size = memSpace.selectionSize
+        } else if let fileSpace = fileSpace {
             size = fileSpace.selectionSize
         } else {
             size = self.space.selectionSize
@@ -157,7 +142,7 @@ public class StringDataset: Dataset {
         }
     }
 
-    func characterArrayFromString(_ string: String) -> [Int8] {
+    private func characterArrayFromString(_ string: String) -> [Int8] {
         let length = string.utf8.count
         var array = [Int8](repeating: 0, count: length + 1)
 
@@ -170,11 +155,7 @@ public class StringDataset: Dataset {
     }
 }
 
-
-// MARK: GroupType extension for StringDataset
-
 extension GroupType {
-    /// Create a StringDataset
     public func createStringDataset(_ name: String, dataspace: Dataspace) -> StringDataset? {
         guard let datatype = Datatype(type: String.self) else {
             return nil
@@ -182,10 +163,10 @@ extension GroupType {
         let datasetID = name.withCString{ name in
             return H5Dcreate2(id, name, datatype.id, dataspace.id, 0, 0, 0)
         }
+        guard datasetID >= 0 else { return nil }
         return StringDataset(id: datasetID)
     }
 
-    /// Create a chunked StringDataset
     public func createStringDataset(_ name: String, dataspace: Dataspace, chunkDimensions: [Int]) -> StringDataset? {
         guard let datatype = Datatype(type: String.self) else {
             return nil
@@ -205,18 +186,10 @@ extension GroupType {
         let datasetID = name.withCString{ name in
             return H5Dcreate2(id, name, datatype.id, dataspace.id, 0, plist, 0)
         }
+        guard datasetID >= 0 else { return nil }
         return StringDataset(id: datasetID)
     }
 
-    /// Create an String Dataset and write data
-    public func createAndWriteDataset(_ name: String, dims: [Int], data: [String]) throws -> StringDataset {
-        let space = Dataspace(dims: dims)
-        let set = createStringDataset(name, dataspace: space)!
-        try set.write(data)
-        return set
-    }
-
-    /// Open an existing StringDataset
     public func openStringDataset(_ name: String) -> StringDataset? {
         let datasetID = name.withCString{ name in
             return H5Dopen2(id, name, 0)

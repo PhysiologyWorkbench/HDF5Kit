@@ -9,8 +9,9 @@
     import Foundation
  #endif
 
-open class StringAttribute: Attribute {
+public typealias StringAttribute = TypedAttribute<String>
 
+extension TypedAttribute where T == String {
     public func read() throws -> [String] {
         if type.isVariableLengthString {
             return try readVariableLength()
@@ -85,7 +86,7 @@ open class StringAttribute: Attribute {
         }
     }
 
-    public func writeVariable(_ data: String) throws {
+    func writeVariable(_ data: String) throws {
         let size = self.space.size
         precondition(1 == size, "Data size doesn't match Dataspace dimensions")
 
@@ -103,7 +104,7 @@ open class StringAttribute: Attribute {
         }
     }
 
-    public func writeFixed(_ data: String) throws {
+    func writeFixed(_ data: String) throws {
         let size = self.space.size
         precondition(1 == size, "Data size doesn't match Dataspace dimensions")
 
@@ -120,13 +121,11 @@ open class StringAttribute: Attribute {
             }
         }
     }
-
 }
 
-
-public extension GroupType {
+extension GroupType {
     /// Creates a `String` attribute.
-    func createStringAttribute(_ name: String) -> StringAttribute? {
+    public func createStringAttribute(_ name: String) -> StringAttribute? {
         guard let datatype = Datatype(type: String.self) else {
             return nil
         }
@@ -134,27 +133,23 @@ public extension GroupType {
         let attributeID = name.withCString { name in
             return H5Acreate2(id, name, datatype.id, dataspace.id, 0, 0)
         }
+        guard attributeID >= 0 else { return nil }
         return StringAttribute(id: attributeID)
     }
 
     /// Creates a fixed-length `String` attribute.
-    func createFixedStringAttribute(_ name: String, size: Int) -> StringAttribute? {
+    public func createFixedStringAttribute(_ name: String, size: Int) -> StringAttribute? {
         let datatype = Datatype(dataClass: .string, size: size)
         let dataspace = Dataspace(dims: [1])
         let attributeID = name.withCString { name in
             return H5Acreate2(id, name, datatype.id, dataspace.id, 0, 0)
         }
+        guard attributeID >= 0 else { return nil }
         return StringAttribute(id: attributeID)
     }
 
     /// Opens a `String` attribute.
-    func openStringAttribute(_ name: String) -> StringAttribute? {
-        let attributeID = name.withCString{ name in
-            return H5Aopen(id, name, 0)
-        }
-        guard attributeID >= 0 else {
-            return nil
-        }
-        return StringAttribute(id: attributeID)
+    public func openStringAttribute(_ name: String) -> StringAttribute? {
+        return openAttribute(name)
     }
 }

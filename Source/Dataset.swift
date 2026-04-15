@@ -8,8 +8,8 @@
     @preconcurrency import CHDF5
 #endif
 
+@HDF5Actor
 open class Dataset: Object {
-    /// The address in the file of the dataset or `nil` if the offset is undefined. That address is expressed as the offset in bytes from the beginning of the file.
     public var offset: Int? {
         let offset = H5Dget_offset(id)
         guard offset != UInt64(bitPattern: Int64(-1)) else {
@@ -31,31 +31,13 @@ open class Dataset: Object {
             return space.dims
         }
         set {
-            let array = newValue.map({ hsize_t(bitPattern: hssize_t($0)) })
-            array.withUnsafeBufferPointer { (pointer) -> Void in
+            let dims64 = newValue.map({ hsize_t(bitPattern: hssize_t($0)) })
+            _ = dims64.withUnsafeBufferPointer { pointer in
                 H5Dset_extent(id, pointer.baseAddress)
             }
         }
     }
 
-    /// Retrieves the size of chunks for the raw data of a chunked layout Dataset, or `nil` if the Dataset's layout is not chunked
-    public var chunkSize: [Int]? {
-        let plistId = H5Dget_create_plist(id)
-        if H5Pget_layout(plistId) != H5D_CHUNKED {
-            return nil
-        }
-
-        let rank = space.dims.count
-        var chunkSize = [hsize_t](repeating: 0, count: rank)
-        chunkSize.withUnsafeMutableBufferPointer { (pointer: inout UnsafeMutableBufferPointer<hsize_t>) -> Void in
-            H5Pget_chunk(plistId, Int32(rank), pointer.baseAddress)
-        }
-        return chunkSize.map({ Int(hssize_t(bitPattern: $0)) })
-    }
-
-    /// Read data using an optional memory Dataspace and an optional file Dataspace
-    ///
-    /// - precondition: The `selectionSize` of the memory Dataspace is the same as for the file Dataspace and there is enough memory available for it
     open func read(into pointer: UnsafeMutableRawPointer, type: NativeType, memSpace: Dataspace? = nil, fileSpace: Dataspace? = nil) throws {
         let status = H5Dread(id, type.rawValue, memSpace?.id ?? 0, fileSpace?.id ?? 0, 0, pointer)
         if status < 0 {
@@ -63,57 +45,10 @@ open class Dataset: Object {
         }
     }
 
-    /// Write data using an optional memory Dataspace and an optional file Dataspace
-    ///
-    /// - precondition: The `selectionSize` of the memory Dataspace is the same as for the file Dataspace
     open func write(from pointer: UnsafeRawPointer, type: NativeType, memSpace: Dataspace? = nil, fileSpace: Dataspace? = nil) throws {
         let status = H5Dwrite(id, type.rawValue, memSpace?.id ?? 0, fileSpace?.id ?? 0, 0, pointer);
         if status < 0 {
             throw Error.lastError()
         }
-    }
-}
-
-
-// MARK: GroupType extension for Dataset
-
-extension GroupType {
-    /// Create a Dataset
-    public func createDataset(_ name: String, datatype: Datatype, dataspace: Dataspace) -> Dataset {
-        let datasetID = name.withCString{ name in
-            return H5Dcreate2(id, name, datatype.id, dataspace.id, 0, 0, 0)
-        }
-        return Dataset(id: datasetID)
-    }
-
-    /// Create a chunked Dataset
-    public func createDataset(_ name: String, datatype: Datatype, dataspace: Dataspace, chunkDimensions: [Int]) -> Dataset? {
-        precondition(dataspace.dims.count == chunkDimensions.count)
-
-        let plist = H5Pcreate(H5P_CLS_DATASET_CREATE_ID_g)
-        H5Pset_char_encoding(plist, H5T_CSET_UTF8)
-        let chunkDimensions64 = chunkDimensions.map({ hsize_t(bitPattern: hssize_t($0)) })
-        chunkDimensions64.withUnsafeBufferPointer { (pointer) -> Void in
-            H5Pset_chunk(plist, Int32(chunkDimensions.count), pointer.baseAddress)
-        }
-        defer {
-            H5Pclose(plist)
-        }
-
-        let datasetID = name.withCString{ name in
-            return H5Dcreate2(id, name, datatype.id, dataspace.id, 0, plist, 0)
-        }
-        return Dataset(id: datasetID)
-    }
-
-    /// Open an existing Dataset
-    public func openDataset(_ name: String) -> Dataset? {
-        let datasetID = name.withCString{ name in
-            return H5Dopen2(id, name, 0)
-        }
-        guard datasetID >= 0 else {
-            return nil
-        }
-        return Dataset(id: datasetID)
     }
 }

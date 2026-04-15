@@ -12,7 +12,7 @@
 open class Attribute {
     nonisolated(unsafe) public internal(set) var id: hid_t = -1
 
-    init(id: hid_t) {
+    public init(id: hid_t) {
         precondition(id >= 0, "Object ID needs to be non-negative")
         self.id = id
     }
@@ -30,6 +30,7 @@ open class Attribute {
         }
 
         let pointer = UnsafeMutablePointer<CChar>.allocate(capacity: count + 1)
+        defer { pointer.deallocate() }
         H5Aget_name(id, count + 1, pointer)
         return String(utf8String: pointer)!
     }
@@ -42,7 +43,7 @@ open class Attribute {
         return Datatype(id: H5Aget_type(id))
     }
 
-    /// Reads attribute data.
+    /// Reads attribute data into a raw pointer.
     open func read(into pointer: UnsafeMutableRawPointer, type: NativeType) throws {
         let status = H5Aread(id, type.rawValue, pointer)
         if status < 0 {
@@ -50,7 +51,7 @@ open class Attribute {
         }
     }
 
-    /// Writes attribute data.
+    /// Writes attribute data from a raw pointer.
     open func write(from pointer: UnsafeRawPointer, type: NativeType) throws {
         let status = H5Awrite(id, type.rawValue, pointer);
         if status < 0 {
