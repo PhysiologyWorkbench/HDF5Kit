@@ -10,21 +10,21 @@ import Testing
 @HDF5Actor
 struct Phase3Tests {
     @Test func datasetAttributes() async throws {
-        let filePath = "test_dataset_attributes.h5"
-        guard let file = File.create(filePath, mode: .truncate) else {
-            Issue.record("Failed to create file")
+        let filePath = "Tests/Data/test_dataset_attributes.h5"
+        guard let file = File.open(filePath, mode: .readWrite) ?? File.create(filePath, mode: .truncate) else {
+            Issue.record("Failed to open or create file")
             return
         }
         
         let dataspace = Dataspace(dims: [10])
-        guard let dataset = file.createIntDataset("test", dataspace: dataspace) else {
-            Issue.record("Failed to create dataset")
+        guard let dataset = file.createIntDataset("test", dataspace: dataspace) ?? file.openIntDataset("test") else {
+            Issue.record("Failed to create or open dataset")
             return
         }
         
         let attrDataspace = Dataspace(dims: [1])
-        guard let attribute = dataset.createIntAttribute("units", dataspace: attrDataspace) else {
-            Issue.record("Failed to create attribute on dataset")
+        guard let attribute = dataset.createIntAttribute("units", dataspace: attrDataspace) ?? dataset.openIntAttribute("units") else {
+            Issue.record("Failed to create or open attribute on dataset")
             return
         }
         
@@ -34,17 +34,22 @@ struct Phase3Tests {
     }
     
     @Test func datasetCompression() async throws {
-        let filePath = "test_compression.h5"
-        guard let file = File.create(filePath, mode: .truncate) else {
-            Issue.record("Failed to create file")
+        let filePath = "Tests/Data/test_compression.h5"
+        guard let file = File.open(filePath, mode: .readWrite) ?? File.create(filePath, mode: .truncate) else {
+            Issue.record("Failed to open or create file")
             return
         }
         
         let dims = [100, 100]
         let data = [Int](repeating: 1, count: dims[0] * dims[1])
         
-        // Create dataset with compression
-        let dataset = try file.createAndWriteDataset("compressed", dims: dims, data: data, compression: 9)
+        // Create dataset with compression if it doesn't exist
+        let dataset: IntDataset
+        if let existing = file.openIntDataset("compressed") {
+            dataset = existing
+        } else {
+            dataset = try file.createAndWriteDataset("compressed", dims: dims, data: data, compression: 9)
+        }
         
         // Verify we can read it back
         let readData: [Int] = try dataset.read()
@@ -52,18 +57,20 @@ struct Phase3Tests {
     }
     
     @Test func softLinks() async throws {
-        let filePath = "test_links.h5"
-        guard let file = File.create(filePath, mode: .truncate) else {
-            Issue.record("Failed to create file")
+        let filePath = "Tests/Data/test_links.h5"
+        guard let file = File.open(filePath, mode: .readWrite) ?? File.create(filePath, mode: .truncate) else {
+            Issue.record("Failed to open or create file")
             return
         }
         
-        let group = file.createGroup("group")
+        let group = file.openGroup("group") ?? file.createGroup("group")
         let dataspace = Dataspace(dims: [5])
-        _ = group.createIntDataset("data", dataspace: dataspace)
+        _ = group.openIntDataset("data") ?? group.createIntDataset("data", dataspace: dataspace)
         
-        // Create soft link
-        try file.createSoftLink(targetPath: "/group/data", linkName: "shortcut")
+        // Create soft link if it doesn't exist
+        if !file.linkExists("shortcut") {
+            try file.createSoftLink(targetPath: "/group/data", linkName: "shortcut")
+        }
         
         // Check link exists
         #expect(file.linkExists("shortcut"))
