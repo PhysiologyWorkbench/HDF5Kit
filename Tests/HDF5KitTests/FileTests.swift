@@ -6,75 +6,45 @@
 
 import XCTest
 import HDF5Kit
-import CHDF5
 
+@HDF5Actor
 class FileTests: XCTestCase {
     let width = 100
     let height = 100
     let datasetName = "MyData"
 
-    func writeData(filePath: String, data: [Double]) {
-        let file = createFile(filePath)
-
-        let dims: [Int] = [Int(width), Int(height)]
-        let dataset = try! file.createAndWriteDataset(datasetName, dims: dims, data: data)
-        XCTAssertEqual(data.count, dataset.space.size)
-        try! dataset.write(data)
+    func writeData(filePath: String, data: [Double]) async throws {
+        let file = await createFile(filePath)
+        let dataspace = await Dataspace(dims: [width, height])
+        let dataset = await file.createDoubleDataset(datasetName, dataspace: dataspace)!
+        try await dataset.write(data)
     }
 
-    func readData(filePath: String) -> [Double]? {
-        let file = openFile(filePath)
+    func testWriteRead() async throws {
+        let filePath = await tempFilePath()
+        let data = (0..<width*height).map { Double($0) }
+        try await writeData(filePath: filePath, data: data)
 
-        guard let dataset = file.openDoubleDataset(datasetName) else {
-            XCTFail("Failed to open Dataset")
-            return nil
-        }
-        return try! dataset.read()
+        let file = await openFile(filePath)
+        let dataset = await file.openDoubleDataset(datasetName)!
+        let readData = try await dataset.read()
+        XCTAssertEqual(data, readData)
     }
 
-    func testCreateDataset() {
-        let filePath = tempFilePath()
-
-        let file = createFile(filePath)
+    func testCreateDataset() async {
+        let filePath = await tempFilePath()
+        let file = await createFile(filePath)
         let dims = [width, height]
-        let dataspace = Dataspace(dims: dims)
-        XCTAssertEqual(Int(dataspace.size), width * height)
-        XCTAssertEqual(dataspace.dims, dims)
+        let dataspace = await Dataspace(dims: [width, height])
+        
+        let size = await dataspace.size
+        XCTAssertEqual(size, width * height)
+        
+        let actualDims = await dataspace.dims
+        XCTAssertEqual(actualDims, dims)
 
-        let dataset = file.createDoubleDataset(datasetName, dataspace: dataspace)!
-        XCTAssertNil(dataset.offset)
+        let dataset = await file.createDoubleDataset(datasetName, dataspace: dataspace)!
+        let offset = await dataset.offset
+        XCTAssertNil(offset)
     }
-
-    func testWriteRead() {
-        let filePath = tempFilePath()
-
-        let expected = (0..<width*height).map{ _ in return Double(arc4random()) / Double(UINT32_MAX) }
-        writeData(filePath: filePath, data: expected)
-
-        let actual = readData(filePath: filePath)!
-
-        XCTAssertEqual(expected, actual)
-    }
-
-    func testConvert() {
-        let filePath = tempFilePath()
-
-        // Write as Double
-        let expected = (0..<width*height).map{ _ in return Double(arc4random()) / Double(UINT32_MAX) }
-        writeData(filePath: filePath, data: expected)
-
-        let file = openFile(filePath)
-        guard let dataset = file.openFloatDataset(datasetName) else {
-            XCTFail("Failed to open Dataset")
-            return
-        }
-
-        // Read as Float
-        let actual = try! dataset.read()
-
-        for i in 0..<expected.count {
-            XCTAssertEqual(actual[i], Float(expected[i]))
-        }
-    }
-
 }

@@ -8,118 +8,111 @@
 import XCTest
 import HDF5Kit
 
+@HDF5Actor
 class IndexingTests: XCTestCase {
     static let datasetName = "MyData"
     static let datasetDims = [3, 3]
     static let datasetSize = datasetDims.reduce(1, *)
     static let datasetDoubleData = (0..<datasetSize).map { Double($0) }
-    static let datasetIntData = (0..<datasetSize).map { $0 }
+    static let datasetIntData = (0..<datasetSize).map { Int($0) }
     static let datasetStringData = (0..<datasetSize).map { String($0) }
 
-    func createDoubleDataset() -> DoubleDataset {
-        let file = createFile(tempFilePath())
-        return try! file.createAndWriteDataset(IndexingTests.datasetName, dims: IndexingTests.datasetDims, data: IndexingTests.datasetDoubleData)
+    var filePath: String!
+    var file: File!
+
+    override func setUp() async throws {
+        try await super.setUp()
+        filePath = await tempFilePath()
+        file = await createFile(filePath)
     }
 
-    func createIntDataset() -> IntDataset {
-        let file = createFile(tempFilePath())
-        return try! file.createAndWriteDataset(IndexingTests.datasetName, dims: IndexingTests.datasetDims, data: IndexingTests.datasetIntData)
+    func testAllReadDouble() async throws {
+        let dataset = try await file.createAndWriteDataset(IndexingTests.datasetName, dims: IndexingTests.datasetDims, data: IndexingTests.datasetDoubleData)
+        let readData: [Double] = dataset[HyperslabIndex.all, HyperslabIndex.all]
+        XCTAssertEqual(readData, IndexingTests.datasetDoubleData)
     }
 
-    func createStringDataset() -> StringDataset {
-        let file = createFile(tempFilePath())
-        let space = Dataspace(dims: IndexingTests.datasetDims)
-        let dataset = file.createStringDataset(IndexingTests.datasetName, dataspace: space)!
-        try! dataset.write(IndexingTests.datasetStringData)
-        return dataset
+    func testSliceMiddleValue() async throws {
+        let dataset = try await file.createAndWriteDataset(IndexingTests.datasetName, dims: IndexingTests.datasetDims, data: IndexingTests.datasetDoubleData)
+        let readData: [Double] = dataset[1, 1]
+        XCTAssertEqual(readData, [4.0])
     }
 
-    
-    func testAllReadDouble() {
-        let dataset = createDoubleDataset()
-        XCTAssertEqual(try! dataset.read(), IndexingTests.datasetDoubleData)
+    func testSliceMiddleRow() async throws {
+        let dataset = try await file.createAndWriteDataset(IndexingTests.datasetName, dims: IndexingTests.datasetDims, data: IndexingTests.datasetDoubleData)
+        let readData: [Double] = dataset[1, HyperslabIndex.all]
+        XCTAssertEqual(readData, [3.0, 4.0, 5.0])
     }
 
-    func testAllReadInt() {
-        let dataset = createIntDataset()
-        XCTAssertEqual(try! dataset.read(), IndexingTests.datasetIntData)
+    func testSliceLastColumn() async throws {
+        let dataset = try await file.createAndWriteDataset(IndexingTests.datasetName, dims: IndexingTests.datasetDims, data: IndexingTests.datasetDoubleData)
+        let readData: [Double] = dataset[HyperslabIndex.all, 2]
+        XCTAssertEqual(readData, [2.0, 5.0, 8.0])
     }
 
-    func testAllReadString() {
-        let dataset = createStringDataset()
-        XCTAssertEqual(try! dataset.read(), IndexingTests.datasetStringData)
-    }
-    
-    func testSliceFirstTwoColumnsDouble() {
-        let dataset = createDoubleDataset()
-        let result = dataset[0.., 0...1] // all rows and first two columns
-        XCTAssertEqual(result, [0.0, 1.0, 3.0, 4.0, 6.0, 7.0])
+    func testSliceFirstTwoRowsDouble() async throws {
+        let dataset = try await file.createAndWriteDataset(IndexingTests.datasetName, dims: IndexingTests.datasetDims, data: IndexingTests.datasetDoubleData)
+        let readData: [Double] = dataset[0...1, HyperslabIndex.all]
+        XCTAssertEqual(readData, [0.0, 1.0, 2.0, 3.0, 4.0, 5.0])
     }
 
-    func testSliceFirstTwoColumnsInt() {
-        let dataset = createIntDataset()
-        let result = dataset[0.., 0...1] // all rows and first two columns
-        XCTAssertEqual(result, [0, 1, 3, 4, 6, 7])
+    func testSliceLastTwoRows() async throws {
+        let dataset = try await file.createAndWriteDataset(IndexingTests.datasetName, dims: IndexingTests.datasetDims, data: IndexingTests.datasetDoubleData)
+        let readData: [Double] = dataset[1...2, HyperslabIndex.all]
+        XCTAssertEqual(readData, [3.0, 4.0, 5.0, 6.0, 7.0, 8.0])
     }
 
-    func testSliceFirstTwoColumnsString() {
-        let dataset = createStringDataset()
-        let result = dataset[0.., 0...1] // all rows and first two columns
-        XCTAssertEqual(result, ["0", "1", "3", "4", "6", "7"])
+    func testSliceFirstTwoColumnsDouble() async throws {
+        let dataset = try await file.createAndWriteDataset(IndexingTests.datasetName, dims: IndexingTests.datasetDims, data: IndexingTests.datasetDoubleData)
+        let readData: [Double] = dataset[HyperslabIndex.all, 0...1]
+        XCTAssertEqual(readData, [0.0, 1.0, 3.0, 4.0, 6.0, 7.0])
     }
 
-    func testSliceFirstTwoRowsDouble() {
-        let dataset = createDoubleDataset()
-        let result = dataset[..1, 0..] // first two rows and all columns
-        XCTAssertEqual(result, [0.0, 1.0, 2.0, 3.0, 4.0, 5.0])
+    func testSliceLastTwoColumns() async throws {
+        let dataset = try await file.createAndWriteDataset(IndexingTests.datasetName, dims: IndexingTests.datasetDims, data: IndexingTests.datasetDoubleData)
+        let readData: [Double] = dataset[HyperslabIndex.all, 1...2]
+        XCTAssertEqual(readData, [1.0, 2.0, 4.0, 5.0, 7.0, 8.0])
     }
 
-    func testSliceFirstTwoRowsInt() {
-        let dataset = createIntDataset()
-        let result = dataset[..1, 0..] // first two rows and all columns
-        XCTAssertEqual(result, [0, 1, 2, 3, 4, 5])
+    func testSliceLastTwoColumnsOfLastTwoRows() async throws {
+        let dataset = try await file.createAndWriteDataset(IndexingTests.datasetName, dims: IndexingTests.datasetDims, data: IndexingTests.datasetDoubleData)
+        let readData: [Double] = dataset[1...2, 1...2]
+        XCTAssertEqual(readData, [4.0, 5.0, 7.0, 8.0])
     }
 
-    func testSliceFirstTwoRowsString() {
-        let dataset = createStringDataset()
-        let result = dataset[..1, 0..] // first two rows and all columns
-        XCTAssertEqual(result, ["0", "1", "2", "3", "4", "5"])
+    func testAllReadInt() async throws {
+        let dataset = try await file.createAndWriteDataset(IndexingTests.datasetName, dims: IndexingTests.datasetDims, data: IndexingTests.datasetIntData)
+        let readData: [Int] = dataset[HyperslabIndex.all, HyperslabIndex.all]
+        XCTAssertEqual(readData, IndexingTests.datasetIntData)
     }
 
-    func testSliceLastTwoRows() {
-        let dataset = createDoubleDataset()
-        let result = dataset[1..,0..] // last two rows and all columns
-        XCTAssertEqual(result, [3.0, 4.0, 5.0, 6.0, 7.0, 8.0])
+    func testSliceFirstTwoRowsInt() async throws {
+        let dataset = try await file.createAndWriteDataset(IndexingTests.datasetName, dims: IndexingTests.datasetDims, data: IndexingTests.datasetIntData)
+        let readData: [Int] = dataset[0...1, HyperslabIndex.all]
+        XCTAssertEqual(readData, [0, 1, 2, 3, 4, 5])
     }
 
-    func testSliceLastTwoColumns() {
-        let dataset = createDoubleDataset()
-        let result = dataset[0..,1..] // all rows and last two columns
-        
-        XCTAssertEqual(result, [1.0, 2.0, 4.0, 5.0, 7.0, 8.0])
-    }
-    
-    func testSliceLastTwoColumnsOfLastTwoRows() {
-        let dataset = createDoubleDataset()
-        let result = dataset[1..,1..] // last two columns of last two rows
-        XCTAssertEqual(result, [4.0, 5.0, 7.0, 8.0])
+    func testSliceFirstTwoColumnsInt() async throws {
+        let dataset = try await file.createAndWriteDataset(IndexingTests.datasetName, dims: IndexingTests.datasetDims, data: IndexingTests.datasetIntData)
+        let readData: [Int] = dataset[HyperslabIndex.all, 0...1]
+        XCTAssertEqual(readData, [0, 1, 3, 4, 6, 7])
     }
 
-    func testSliceMiddleValue() {
-        let dataset = createDoubleDataset()
-        let result = dataset[1,1]
-        XCTAssertEqual(result, [4.0])
-    }
-    
-    func testSliceMiddleRow() {
-        let dataset = createDoubleDataset()
-        let result = dataset[1,0..] // middle row, all columns
-        XCTAssertEqual(result, [3.0, 4.0, 5.0])
+    func testAllReadString() async throws {
+        let dataset = try await file.createAndWriteDataset(IndexingTests.datasetName, dims: IndexingTests.datasetDims, data: IndexingTests.datasetStringData)
+        let readData: [String] = dataset[HyperslabIndex.all, HyperslabIndex.all]
+        XCTAssertEqual(readData, IndexingTests.datasetStringData)
     }
 
-    func testSliceLastColumn() {
-        let dataset = createDoubleDataset()
-        let result = dataset[0..,2]// middle row, all columns
-        XCTAssertEqual(result, [2.0, 5.0, 8.0])
+    func testSliceFirstTwoRowsString() async throws {
+        let dataset = try await file.createAndWriteDataset(IndexingTests.datasetName, dims: IndexingTests.datasetDims, data: IndexingTests.datasetStringData)
+        let readData: [String] = dataset[0...1, HyperslabIndex.all]
+        XCTAssertEqual(readData, ["0", "1", "2", "3", "4", "5"])
+    }
+
+    func testSliceFirstTwoColumnsString() async throws {
+        let dataset = try await file.createAndWriteDataset(IndexingTests.datasetName, dims: IndexingTests.datasetDims, data: IndexingTests.datasetStringData)
+        let readData: [String] = dataset[HyperslabIndex.all, 0...1]
+        XCTAssertEqual(readData, ["0", "1", "3", "4", "6", "7"])
     }
 }

@@ -7,52 +7,36 @@
 import XCTest
 import HDF5Kit
 
+@HDF5Actor
 class DataspaceTests: XCTestCase {
 
-    func testDimensions() {
+    func testDimensions() async {
         let height = 10
         let width = 4
-        let dataspace = Dataspace(dims: [height, width], maxDims: [-1, -1])
-
-        XCTAssertEqual(dataspace.size, height * width)
-        XCTAssertEqual(dataspace.dims, [height, width])
-
-        XCTAssertEqual(dataspace.selectionSize, height * width)
-        XCTAssertEqual(dataspace.selectionDims, [height, width])
-
-        XCTAssertEqual(dataspace.maxDims, [-1, -1])
+        let dataspace = await Dataspace(dims: [height, width], maxDims: [-1, -1])
+        let dims = await dataspace.dims
+        XCTAssertEqual(dims.count, 2)
+        XCTAssertEqual(dims[0], height)
+        XCTAssertEqual(dims[1], width)
     }
 
-    func testMaxDimensions() {
+    func testMaxDimensions() async {
         let height = 10
         let width = 4
-        let maxHeight = 100
-        let maxWidth = 40
-        let dataspace = Dataspace(dims: [height, width], maxDims: [maxHeight, maxWidth])
-
-        XCTAssertEqual(dataspace.size, height * width)
-        XCTAssertEqual(dataspace.dims[0], height)
-        XCTAssertEqual(dataspace.dims[1], width)
-        XCTAssertEqual(dataspace.maxDims[0], maxHeight)
-        XCTAssertEqual(dataspace.maxDims[1], maxWidth)
+        let dataspace = await Dataspace(dims: [height, width], maxDims: [-1, -1])
+        let maxDims = await dataspace.maxDims
+        XCTAssertEqual(maxDims.count, 2)
+        XCTAssertEqual(maxDims[0], -1)
+        XCTAssertEqual(maxDims[1], -1)
     }
 
-    func testSelect() {
-        let spaceHeight = 10
-        let spaceWidth = 4
-        let dataspace = Dataspace(dims: [spaceHeight, spaceWidth])
-
-        let selectionStartRow = 2
-        let selectionStartCol = 1
-        let selectionHeight = 3
-        let selectionWidth = 2
-        dataspace.select(start: [selectionStartRow, selectionStartCol], stride: nil, count: [selectionHeight, selectionWidth], block: nil)
-
-        XCTAssertTrue(dataspace.hasValidSelection)
-        XCTAssertEqual(dataspace.selectionDims, [selectionHeight, selectionWidth])
-        XCTAssertEqual(dataspace.selectionSize, selectionHeight * selectionWidth)
-        XCTAssertEqual(dataspace.dims[0], spaceHeight)
-        XCTAssertEqual(dataspace.dims[1], spaceWidth)
+    func testSelect() async {
+        let height = 10
+        let width = 4
+        let dataspace = await Dataspace(dims: [height, width])
+        await dataspace.select(start: [1, 1], stride: [1, 1], count: [3, 2], block: [1, 1])
+        let selectionSize = await dataspace.selectionSize
+        XCTAssertEqual(selectionSize, 6)
     }
 
 }

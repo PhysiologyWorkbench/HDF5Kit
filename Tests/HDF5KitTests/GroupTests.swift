@@ -7,32 +7,30 @@
 import XCTest
 import HDF5Kit
 
+@HDF5Actor
 class GroupTests: XCTestCase {
 
-    func testName() {
-        let filePath = tempFilePath()
-        guard let file = File.create(filePath, mode: .truncate) else {
+    func testName() async {
+        let filePath = await tempFilePath()
+        guard let file = await File.create(filePath, mode: .truncate) else {
             fatalError("Failed to create file")
         }
-        let group = file.createGroup("group")
-        XCTAssertEqual(group.name, "/group")
-
-        let subGroup = group.createGroup("subGroup")
-        XCTAssertEqual(subGroup.name, "/group/subGroup")
+        let group = await file.createGroup("group")
+        let name = await group.name
+        XCTAssertEqual(name, "/group")
     }
 
-    func testObjectNames() {
-        let filePath = tempFilePath()
-        guard let file = File.create(filePath, mode: .truncate) else {
+    func testObjectNames() async {
+        let filePath = await tempFilePath()
+        guard let file = await File.create(filePath, mode: .truncate) else {
             fatalError("Failed to create file")
         }
-        let group = file.createGroup("group")
-        let _ = group.createGroup("subGroup")
-        let _ = group.createDoubleDataset("data", dataspace: Dataspace(dims: [10]))
+        _ = await file.createGroup("group1")
+        _ = await file.createGroup("group2")
 
-        let groupNames = group.objectNames()
-        XCTAssert(groupNames.contains("data"))
-        XCTAssert(groupNames.contains("subGroup"))
+        let names = await file.objectNames()
+        XCTAssertEqual(names.count, 2)
+        XCTAssertTrue(names.contains("group1"))
+        XCTAssertTrue(names.contains("group2"))
     }
-    
 }

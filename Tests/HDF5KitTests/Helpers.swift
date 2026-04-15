@@ -7,11 +7,13 @@
 import HDF5Kit
 import Foundation
 
+@HDF5Actor
 func tempFilePath() -> String {
     let fileName = ProcessInfo.processInfo.globallyUniqueString + ".hdf"
     return NSTemporaryDirectory() + "/" + fileName
 }
 
+@HDF5Actor
 func createFile(_ filePath: String) -> File {
     guard let file = File.create(filePath, mode: .truncate) else {
         fatalError("Failed to create file")
@@ -19,6 +21,7 @@ func createFile(_ filePath: String) -> File {
     return file
 }
 
+@HDF5Actor
 func openFile(_ filePath: String) -> File {
     guard let file = File.open(filePath, mode: .readOnly) else {
         fatalError("Failed to open file")

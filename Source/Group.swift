@@ -8,6 +8,7 @@
     @preconcurrency import CHDF5
 #endif
 
+@HDF5Actor
 public protocol GroupType {
     var id: hid_t { get }
 }

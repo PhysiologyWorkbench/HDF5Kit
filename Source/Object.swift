@@ -8,17 +8,19 @@
     @preconcurrency import CHDF5
 #endif
 
+@HDF5Actor
 open class Object {
-    public internal(set) var id: hid_t = -1
+    nonisolated(unsafe) public internal(set) var id: hid_t = -1
 
-    init(id: hid_t) {
+    public init(id: hid_t) {
         precondition(id >= 0, "Object ID needs to be non-negative")
         self.id = id
     }
 
     deinit {
-        let status = H5Oclose(id)
-        assert(status >= 0, "Failed to close Object")
+        if id >= 0 && H5Iis_valid(id) > 0 {
+            H5Oclose(id)
+        }
     }
 
     public var file: File {

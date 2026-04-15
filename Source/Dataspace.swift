@@ -8,8 +8,9 @@
     @preconcurrency import CHDF5
 #endif
 
+@HDF5Actor
 public class Dataspace {
-    var id: hid_t
+    nonisolated(unsafe) var id: hid_t
 
     init(id: hid_t) {
         self.id = id
@@ -21,80 +22,57 @@ public class Dataspace {
     }
 
     deinit {
-        let status = H5Sclose(id)
-        assert(status >= 0, "Failed to close Dataspace")
+        if id >= 0 && H5Iis_valid(id) > 0 {
+            H5Sclose(id)
+        }
+    }
+
+    public func copy() -> Dataspace {
+        return Dataspace(id: H5Scopy(id))
     }
 
     public internal(set) var selectionDims: [Int]
 
     /// Create a Dataspace
-    public init(dims: [Int]) {
+    public init(dims: [Int], maxDims: [Int]? = nil) {
         let dims64 = dims.map({ hsize_t(bitPattern: hssize_t($0)) })
-        id = dims64.withUnsafeBufferPointer { pointer in
-            return H5Screate_simple(Int32(dims.count), pointer.baseAddress, nil)
-        }
-        guard id >= 0 else {
-            fatalError("Failed to create Dataspace")
-        }
-        selectionDims = dims
-    }
-
-    /// Create a Dataspace for use in a chunked Dataset. No component of `maxDims` should be less than the corresponding element of `dims`. Elements of `maxDims` can have a value of -1, those dimension will have an unlimited size.
-    public init(dims: [Int], maxDims: [Int]) {
-        let dims64 = dims.map({ hsize_t(bitPattern: hssize_t($0)) })
-        let maxDims64 = maxDims.map({ hsize_t(bitPattern: hssize_t($0)) })
-        id = dims64.withUnsafeBufferPointer { dimsPointer in
-            maxDims64.withUnsafeBufferPointer { maxDimsPointer in
-                return H5Screate_simple(Int32(dims.count), dimsPointer.baseAddress, maxDimsPointer.baseAddress)
+        let maxDims64 = maxDims?.map({ $0 < 0 ? UInt64(bitPattern: Int64(-1)) : hsize_t(bitPattern: hssize_t($0)) })
+        
+        id = dims64.withUnsafeBufferPointer { (dimsPointer) in
+            if let maxDims64 = maxDims64 {
+                return maxDims64.withUnsafeBufferPointer { (maxDimsPointer) in
+                    return H5Screate_simple(Int32(dims.count), dimsPointer.baseAddress, maxDimsPointer.baseAddress)
+                }
             }
-        }
-        guard id >= 0 else {
-            fatalError("Failed to create Dataspace")
+            return H5Screate_simple(Int32(dims.count), dimsPointer.baseAddress, nil)
         }
         selectionDims = dims
     }
 
-    public convenience init(_ space: Dataspace) {
-        self.init(id: H5Scopy(space.id))
-    }
-
-    /// The total number of elements in the Dataspace
+    /// The number of elements in the Dataspace
     public var size: Int {
-        let result = H5Sget_simple_extent_npoints(id)
-        guard result >= 0 else {
-            fatalError("Failed to get Dataspace size")
-        }
-        return Int(result)
+        return Int(H5Sget_simple_extent_npoints(id))
     }
 
-    /// The size of each dimension in the Dataspace
+    /// The number of dimensions in the Dataspace
+    public var ndims: Int {
+        return Int(H5Sget_simple_extent_ndims(id))
+    }
+
+    /// The dimension extents
     public var dims: [Int] {
-        let rank = Int(H5Sget_simple_extent_ndims(id))
+        let rank = ndims
         var dims = [hsize_t](repeating: 0, count: rank)
-        dims.withUnsafeMutableBufferPointer { pointer in
-            guard H5Sget_simple_extent_dims(id, pointer.baseAddress, nil) >= 0 else {
-                fatalError("Coulnd't get the dimensons of the Dataspace")
-            }
-        }
+        H5Sget_simple_extent_dims(id, &dims, nil)
         return dims.map({ Int(hssize_t(bitPattern: $0)) })
     }
 
-    /// The maximum size of each dimension in the Dataspace
+    /// The maximum dimension extents
     public var maxDims: [Int] {
-        let rank = Int(H5Sget_simple_extent_ndims(id))
+        let rank = ndims
         var maxDims = [hsize_t](repeating: 0, count: rank)
-        maxDims.withUnsafeMutableBufferPointer { pointer in
-            guard H5Sget_simple_extent_dims(id, nil, pointer.baseAddress) >= 0 else {
-                fatalError("Coulnd't get the dimensons of the Dataspace")
-            }
-        }
-        return maxDims.map({ Int(hssize_t(bitPattern: $0)) })
-    }
-
-    // MARK: - Selection
-
-    public var hasValidSelection: Bool {
-        return H5Sselect_valid(id) > 0
+        H5Sget_simple_extent_dims(id, nil, &maxDims)
+        return maxDims.map({ $0 == UInt64(bitPattern: Int64(-1)) ? -1 : Int(hssize_t(bitPattern: $0)) })
     }
 
     public var selectionSize: Int {
@@ -136,7 +114,14 @@ public class Dataspace {
                 }
             }
         }
-        selectionDims = count ?? dims
+        
+        let actualCount = count ?? [Int](repeating: 1, count: start.count)
+        let actualBlock = block ?? [Int](repeating: 1, count: start.count)
+        var selectionDims = [Int](repeating: 0, count: start.count)
+        for i in 0..<start.count {
+            selectionDims[i] = actualCount[i] * actualBlock[i]
+        }
+        self.selectionDims = selectionDims
     }
 
     /// Select a hyperslab region.
@@ -150,16 +135,18 @@ public class Dataspace {
         let rank = dims.count
         var start = [Int](repeating: 0, count: rank)
         var stride = [Int](repeating: 1, count: rank)
-        var count = [Int](repeating: 0, count: rank)
+        var count = [Int](repeating: 1, count: rank)
         var block = [Int](repeating: 1, count: rank)
 
         for (index, slice) in slices.enumerated() {
+            if index >= rank { break }
             start[index] = slice.start
             stride[index] = slice.stride
             if slice.blockCount != HyperslabIndex.all {
                 count[index] = slice.blockCount
             } else {
-                count[index] = dims[index] - slice.start
+                let remaining = dims[index] - slice.start
+                count[index] = remaining / slice.stride
             }
             block[index] = slice.blockSize
         }

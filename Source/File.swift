@@ -8,7 +8,8 @@
     @preconcurrency import CHDF5
 #endif
 
-public class File: GroupType {
+@HDF5Actor
+public class File: Group {
     public enum CreateMode: UInt32 {
         case truncate  = 0x02 // Overwrite existing files
         case exclusive = 0x04 // Fail if file already exists
@@ -45,52 +46,20 @@ public class File: GroupType {
         return File(id: id)
     }
 
-    public internal(set) var id: hid_t = -1
-
-    init(id: hid_t) {
-        self.id = id
+    override init(id: hid_t) {
+        super.init(id: id)
         guard id >= 0 else {
             fatalError("Failed to create HDF5 File")
         }
     }
 
     deinit {
-        let status = H5Fclose(id)
-        assert(status >= 0, "Failed to close HDF5 File")
+        if id >= 0 && H5Iis_valid(id) > 0 {
+            H5Fclose(id)
+        }
     }
 
     public func flush() {
         H5Fflush(id, H5F_SCOPE_LOCAL)
-    }
-
-    /// Create a group
-    public func createGroup(_ name: String) -> Group {
-        let groupID = name.withCString{
-            return H5Gcreate2(id, $0, 0, 0, 0)
-        }
-        return Group(id: groupID)
-    }
-
-    /// Open an existing group
-    public func openGroup(_ name: String) -> Group? {
-        let groupID = name.withCString{
-            return H5Gopen2(id, $0, 0)
-        }
-        guard groupID >= 0 else {
-            return nil
-        }
-        return Group(id: groupID)
-    }
-
-    /**
-     Open an object in a file by path name.
-
-     The object can be a group, dataset, or committed (named) datatype specified by a path name in an HDF5 file.
-
-     - parameter name the path to the object
-     */
-    public func open(_ name: String) -> Object {
-        let oid = name.withCString{ H5Oopen(id, $0, 0) }
-        return Object(id: oid)
     }
 }

@@ -12,7 +12,7 @@
 /// Since HDF5 is non-thread-safe anyway, we should eventually use an actor,
 /// but for now we wrap these accesses to satisfy the compiler.
 private func H5ID(_ id: @autoclosure () -> hid_t) -> hid_t {
-    nonisolated(unsafe) let value = id()
+    let value = id()
     return value
 }
 
