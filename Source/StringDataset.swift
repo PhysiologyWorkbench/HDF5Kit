@@ -5,7 +5,7 @@
 // file LICENSE at the root of the source code distribution tree.
 
 #if SWIFT_PACKAGE
-    import CHDF5
+    @preconcurrency import CHDF5
 #endif
 
 public class StringDataset: Dataset {
@@ -136,23 +136,24 @@ public class StringDataset: Dataset {
         precondition(strings.count == size, "Data size doesn't match Dataspace dimensions")
 
         // First convert the strings into character arrays
-        var data = [[Int8]]()
-        data.reserveCapacity(size)
-        for string in strings {
-            data.append(characterArrayFromString(string))
-        }
+        let data = strings.map { characterArrayFromString($0) }
+        let joinedData = data.flatMap { $0 }
 
-        // Create an array of pointers, which is what H5Dwrite expects
-        var pointers = [UnsafePointer<Int8>]()
-        pointers.reserveCapacity(data.count)
-        for array in data {
-            pointers.append(UnsafePointer<Int8>(array))
-        }
+        try joinedData.withUnsafeBufferPointer { (joinedPointer) -> Void in
+            // Create an array of pointers into the joined data
+            var pointers = [UnsafePointer<Int8>?]()
+            pointers.reserveCapacity(data.count)
+            var offset = 0
+            for array in data {
+                pointers.append(joinedPointer.baseAddress! + offset)
+                offset += array.count
+            }
 
-        let memspace = Dataspace(dims: [size])
-        let type = Datatype.createString()
-        guard H5Dwrite(id, type.id, memspace.id, fileSpace?.id ?? 0, 0, pointers) >= 0 else {
-            throw Error.ioError
+            let memspace = Dataspace(dims: [size])
+            let type = Datatype.createString()
+            guard H5Dwrite(id, type.id, memspace.id, fileSpace?.id ?? 0, 0, pointers) >= 0 else {
+                throw Error.ioError
+            }
         }
     }
 

@@ -5,7 +5,7 @@
 // file LICENSE at the root of the source code distribution tree.
 
 #if SWIFT_PACKAGE
-    import CHDF5
+    @preconcurrency import CHDF5
 #endif
 
 public class FloatDataset: Dataset {

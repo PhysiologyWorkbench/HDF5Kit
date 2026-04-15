@@ -4,10 +4,11 @@
 // terms governing use, modification, and redistribution, is contained in the
 // file LICENSE at the root of the source code distribution tree.
 
-#if SWIFT_PACKAGE
-    @preconcurrency import CHDF5
-#endif
+import Foundation
 
-public enum Error: Swift.Error {
-    case ioError
+/// A global actor used to serialize calls to the non-thread-safe HDF5 C-API.
+@globalActor
+public final actor HDF5Actor {
+    public static let shared = HDF5Actor()
+    private init() {}
 }

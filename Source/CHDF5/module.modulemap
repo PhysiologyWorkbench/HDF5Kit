@@ -1,0 +1,4 @@
+module CHDF5 [system] {
+    header "include/CHDF5.h"
+    export *
+}

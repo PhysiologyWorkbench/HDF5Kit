@@ -5,8 +5,16 @@
 // file LICENSE at the root of the source code distribution tree.
 
 #if SWIFT_PACKAGE
-    import CHDF5
+    @preconcurrency import CHDF5
 #endif
+
+/// Returns a global HDF5 identifier in a way that is marked as safe for Swift 6 concurrency.
+/// Since HDF5 is non-thread-safe anyway, we should eventually use an actor,
+/// but for now we wrap these accesses to satisfy the compiler.
+private func H5ID(_ id: @autoclosure () -> hid_t) -> hid_t {
+    nonisolated(unsafe) let value = id()
+    return value
+}
 
 public enum NativeType {
     case int
@@ -45,19 +53,19 @@ public enum NativeType {
     /// The raw value of the NativeType
     public var rawValue: hid_t {
         switch self {
-        case .int: return H5T_NATIVE_LONG_g
-        case .uint: return H5T_NATIVE_ULONG_g
-        case .float: return H5T_NATIVE_FLOAT_g
-        case .double: return H5T_NATIVE_DOUBLE_g
-        case .int8: return H5T_NATIVE_INT8_g
-        case .uint8: return H5T_NATIVE_UINT8_g
-        case .int16: return H5T_NATIVE_INT16_g
-        case .uint16: return H5T_NATIVE_UINT16_g
-        case .int32: return H5T_NATIVE_INT32_g
-        case .uint32: return H5T_NATIVE_UINT32_g
-        case .int64: return H5T_NATIVE_INT64_g
-        case .uint64: return H5T_NATIVE_UINT64_g
-        case .opaque: return H5T_NATIVE_OPAQUE_g
+        case .int: return H5ID(H5T_NATIVE_LONG_g)
+        case .uint: return H5ID(H5T_NATIVE_ULONG_g)
+        case .float: return H5ID(H5T_NATIVE_FLOAT_g)
+        case .double: return H5ID(H5T_NATIVE_DOUBLE_g)
+        case .int8: return H5ID(H5T_NATIVE_INT8_g)
+        case .uint8: return H5ID(H5T_NATIVE_UINT8_g)
+        case .int16: return H5ID(H5T_NATIVE_INT16_g)
+        case .uint16: return H5ID(H5T_NATIVE_UINT16_g)
+        case .int32: return H5ID(H5T_NATIVE_INT32_g)
+        case .uint32: return H5ID(H5T_NATIVE_UINT32_g)
+        case .int64: return H5ID(H5T_NATIVE_INT64_g)
+        case .uint64: return H5ID(H5T_NATIVE_UINT64_g)
+        case .opaque: return H5ID(H5T_NATIVE_OPAQUE_g)
         }
     }
 

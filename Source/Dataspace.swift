@@ -5,7 +5,7 @@
 // file LICENSE at the root of the source code distribution tree.
 
 #if SWIFT_PACKAGE
-    import CHDF5
+    @preconcurrency import CHDF5
 #endif
 
 public class Dataspace {
@@ -43,8 +43,10 @@ public class Dataspace {
     public init(dims: [Int], maxDims: [Int]) {
         let dims64 = dims.map({ hsize_t(bitPattern: hssize_t($0)) })
         let maxDims64 = maxDims.map({ hsize_t(bitPattern: hssize_t($0)) })
-        id = withExtendedLifetime((dims64, maxDims64)) {
-            return H5Screate_simple(Int32(dims.count), dims64, maxDims64)
+        id = dims64.withUnsafeBufferPointer { dimsPointer in
+            maxDims64.withUnsafeBufferPointer { maxDimsPointer in
+                return H5Screate_simple(Int32(dims.count), dimsPointer.baseAddress, maxDimsPointer.baseAddress)
+            }
         }
         guard id >= 0 else {
             fatalError("Failed to create Dataspace")
@@ -124,8 +126,15 @@ public class Dataspace {
         let stride64 = stride?.map({ hsize_t(bitPattern: hssize_t($0)) })
         let count64 = count?.map({ hsize_t(bitPattern: hssize_t($0)) })
         let block64 = block?.map({ hsize_t(bitPattern: hssize_t($0)) })
-        withExtendedLifetime((start64, stride64, count64, block64)) { () -> Void in
-            H5Sselect_hyperslab(id, H5S_SELECT_SET, start64,  pointerOrNil(stride64), pointerOrNil(count64), pointerOrNil(block64))
+
+        start64.withUnsafeBufferPointer { startPointer in
+            withOptionalUnsafeBufferPointer(stride64) { stridePointer in
+                withOptionalUnsafeBufferPointer(count64) { countPointer in
+                    withOptionalUnsafeBufferPointer(block64) { blockPointer in
+                        H5Sselect_hyperslab(id, H5S_SELECT_SET, startPointer.baseAddress, stridePointer, countPointer, blockPointer)
+                    }
+                }
+            }
         }
         selectionDims = count ?? dims
     }
@@ -167,9 +176,10 @@ public class Dataspace {
     }
 }
 
-func pointerOrNil(_ array: [hsize_t]?) -> UnsafePointer<hsize_t>? {
+func withOptionalUnsafeBufferPointer<T, Result>(_ array: [T]?, _ body: (UnsafePointer<T>?) throws -> Result) rethrows -> Result {
     if let array = array {
-        return UnsafePointer(array)
+        return try array.withUnsafeBufferPointer { try body($0.baseAddress) }
+    } else {
+        return try body(nil)
     }
-    return nil
 }

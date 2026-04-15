@@ -6,6 +6,7 @@
 
 import XCTest
 import HDF5Kit
+import CHDF5
 
 class FileTests: XCTestCase {
     let width = 100
@@ -38,7 +39,7 @@ class FileTests: XCTestCase {
         let dims = [width, height]
         let dataspace = Dataspace(dims: dims)
         XCTAssertEqual(Int(dataspace.size), width * height)
-        XCTAssertEqual(dataspace.dims.map{ Int(hssize_t($0)) }, dims)
+        XCTAssertEqual(dataspace.dims, dims)
 
         let dataset = file.createDoubleDataset(datasetName, dataspace: dataspace)!
         XCTAssertNil(dataset.offset)
