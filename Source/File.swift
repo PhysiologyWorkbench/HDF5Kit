@@ -22,6 +22,7 @@ public class File: Group {
 
     public class func create(_ filePath: String, mode: CreateMode) -> File? {
         H5open()
+        HDF5Error.silence()
 
         var id: hid_t = -1
         filePath.withCString { filePath in
@@ -35,6 +36,7 @@ public class File: Group {
 
     public class func open(_ filePath: String, mode: OpenMode) -> File? {
         H5open()
+        HDF5Error.silence()
 
         var id: hid_t = -1
         filePath.withCString { filePath in
