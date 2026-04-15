@@ -26,7 +26,7 @@ open class StringAttribute: Attribute {
         try data.withUnsafeMutableBufferPointer { pointer in
             let status = H5Aread(id, type.id, pointer.baseAddress)
             if status < 0 {
-                throw Error.ioError
+                throw Error.lastError()
             }
         }
 
@@ -55,7 +55,7 @@ open class StringAttribute: Attribute {
         try data.withUnsafeMutableBufferPointer { pointer in
             let status = H5Aread(id, type.id, pointer.baseAddress)
             if status < 0 {
-                throw Error.ioError
+                throw Error.lastError()
             }
         }
 
@@ -96,7 +96,7 @@ open class StringAttribute: Attribute {
             try pointers.withUnsafeBufferPointer { pp in
                 let type = Datatype.createString()
                 guard H5Awrite(id, type.id, pp.baseAddress) >= 0 else {
-                    throw Error.ioError
+                    throw Error.lastError()
                 }
             }
         }
@@ -115,7 +115,7 @@ open class StringAttribute: Attribute {
         try data.utf8CString.withUnsafeBufferPointer { pointer in
             let type = Datatype.createString(size: stringSize)
             guard H5Awrite(id, type.id, pointer.baseAddress) >= 0 else {
-                throw Error.ioError
+                throw Error.lastError()
             }
         }
     }

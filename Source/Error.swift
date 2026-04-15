@@ -8,6 +8,16 @@
     @preconcurrency import CHDF5
 #endif
 
-public enum Error: Swift.Error {
-    case ioError
+public enum HDF5Error: Swift.Error {
+    case ioError(description: String)
+
+    /// Captures that an HDF5 error occurred.
+    /// In a more advanced implementation, this would walk the H5E error stack.
+    static func lastError() -> HDF5Error {
+        // HDF5 usually prints errors to stderr by default.
+        return .ioError(description: "HDF5 error(s) occurred. See stderr for details.")
+    }
 }
+
+// Keep the old Error name for compatibility.
+public typealias Error = HDF5Error

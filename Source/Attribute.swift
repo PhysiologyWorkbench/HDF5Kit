@@ -8,8 +8,9 @@
     @preconcurrency import CHDF5
 #endif
 
+@HDF5Actor
 open class Attribute {
-    public internal(set) var id: hid_t = -1
+    nonisolated(unsafe) public internal(set) var id: hid_t = -1
 
     init(id: hid_t) {
         precondition(id >= 0, "Object ID needs to be non-negative")
@@ -17,8 +18,9 @@ open class Attribute {
     }
 
     deinit {
-        let status = H5Aclose(id)
-        assert(status >= 0, "Failed to close Object")
+        if id >= 0 && H5Iis_valid(id) > 0 {
+            H5Aclose(id)
+        }
     }
 
     open var name: String {
@@ -44,7 +46,7 @@ open class Attribute {
     open func read(into pointer: UnsafeMutableRawPointer, type: NativeType) throws {
         let status = H5Aread(id, type.rawValue, pointer)
         if status < 0 {
-            throw Error.ioError
+            throw Error.lastError()
         }
     }
 
@@ -52,7 +54,7 @@ open class Attribute {
     open func write(from pointer: UnsafeRawPointer, type: NativeType) throws {
         let status = H5Awrite(id, type.rawValue, pointer);
         if status < 0 {
-            throw Error.ioError
+            throw Error.lastError()
         }
     }
 }

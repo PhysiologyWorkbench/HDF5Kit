@@ -59,7 +59,7 @@ open class Dataset: Object {
     open func read(into pointer: UnsafeMutableRawPointer, type: NativeType, memSpace: Dataspace? = nil, fileSpace: Dataspace? = nil) throws {
         let status = H5Dread(id, type.rawValue, memSpace?.id ?? 0, fileSpace?.id ?? 0, 0, pointer)
         if status < 0 {
-            throw Error.ioError
+            throw Error.lastError()
         }
     }
 
@@ -69,7 +69,7 @@ open class Dataset: Object {
     open func write(from pointer: UnsafeRawPointer, type: NativeType, memSpace: Dataspace? = nil, fileSpace: Dataspace? = nil) throws {
         let status = H5Dwrite(id, type.rawValue, memSpace?.id ?? 0, fileSpace?.id ?? 0, 0, pointer);
         if status < 0 {
-            throw Error.ioError
+            throw Error.lastError()
         }
     }
 }
