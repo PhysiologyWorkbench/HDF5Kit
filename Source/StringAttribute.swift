@@ -123,7 +123,7 @@ extension TypedAttribute where T == String {
     }
 }
 
-extension GroupType {
+extension AttributeHost {
     /// Creates a `String` attribute.
     public func createStringAttribute(_ name: String) -> StringAttribute? {
         guard let datatype = Datatype(type: String.self) else {

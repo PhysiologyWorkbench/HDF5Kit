@@ -11,12 +11,12 @@
 public typealias FloatDataset = TypedDataset<Float>
 
 extension GroupType {
-    public func createFloatDataset(_ name: String, dataspace: Dataspace) -> FloatDataset? {
-        return createDataset(name, dataspace: dataspace)
+    public func createFloatDataset(_ name: String, dataspace: Dataspace, compression: Int? = nil) -> FloatDataset? {
+        return createDataset(name, dataspace: dataspace, compression: compression)
     }
 
-    public func createFloatDataset(_ name: String, dataspace: Dataspace, chunkDimensions: [Int]) -> FloatDataset? {
-        return createDataset(name, dataspace: dataspace, chunkDimensions: chunkDimensions)
+    public func createFloatDataset(_ name: String, dataspace: Dataspace, chunkDimensions: [Int], compression: Int? = nil) -> FloatDataset? {
+        return createDataset(name, dataspace: dataspace, chunkDimensions: chunkDimensions, compression: compression)
     }
 
     public func openFloatDataset(_ name: String) -> FloatDataset? {

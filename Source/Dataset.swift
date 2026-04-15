@@ -9,7 +9,7 @@
 #endif
 
 @HDF5Actor
-open class Dataset: Object {
+open class Dataset: Object, AttributeHost {
     public var offset: Int? {
         let offset = H5Dget_offset(id)
         guard offset != UInt64(bitPattern: Int64(-1)) else {

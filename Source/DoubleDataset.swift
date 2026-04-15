@@ -11,12 +11,12 @@
 public typealias DoubleDataset = TypedDataset<Double>
 
 extension GroupType {
-    public func createDoubleDataset(_ name: String, dataspace: Dataspace) -> DoubleDataset? {
-        return createDataset(name, dataspace: dataspace)
+    public func createDoubleDataset(_ name: String, dataspace: Dataspace, compression: Int? = nil) -> DoubleDataset? {
+        return createDataset(name, dataspace: dataspace, compression: compression)
     }
 
-    public func createDoubleDataset(_ name: String, dataspace: Dataspace, chunkDimensions: [Int]) -> DoubleDataset? {
-        return createDataset(name, dataspace: dataspace, chunkDimensions: chunkDimensions)
+    public func createDoubleDataset(_ name: String, dataspace: Dataspace, chunkDimensions: [Int], compression: Int? = nil) -> DoubleDataset? {
+        return createDataset(name, dataspace: dataspace, chunkDimensions: chunkDimensions, compression: compression)
     }
 
     public func openDoubleDataset(_ name: String) -> DoubleDataset? {

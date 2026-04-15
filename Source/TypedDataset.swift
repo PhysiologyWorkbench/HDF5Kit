@@ -90,7 +90,10 @@ open class TypedDataset<T: HDF5Representable>: Dataset {
 
 extension GroupType {
     /// Create a TypedDataset
-    public func createDataset<T: HDF5Representable>(_ name: String, dataspace: Dataspace) -> TypedDataset<T>? {
+    public func createDataset<T: HDF5Representable>(_ name: String, dataspace: Dataspace, compression: Int? = nil) -> TypedDataset<T>? {
+        if let compression = compression {
+            return createDataset(name, dataspace: dataspace, chunkDimensions: dataspace.dims, compression: compression)
+        }
         if T.self == String.self {
             return createStringDataset(name, dataspace: dataspace) as? TypedDataset<T>
         }
@@ -102,9 +105,9 @@ extension GroupType {
     }
 
     /// Create a chunked TypedDataset
-    public func createDataset<T: HDF5Representable>(_ name: String, dataspace: Dataspace, chunkDimensions: [Int]) -> TypedDataset<T>? {
+    public func createDataset<T: HDF5Representable>(_ name: String, dataspace: Dataspace, chunkDimensions: [Int], compression: Int? = nil) -> TypedDataset<T>? {
         if T.self == String.self {
-            return createStringDataset(name, dataspace: dataspace, chunkDimensions: chunkDimensions) as? TypedDataset<T>
+            return createStringDataset(name, dataspace: dataspace, chunkDimensions: chunkDimensions, compression: compression) as? TypedDataset<T>
         }
         precondition(dataspace.dims.count == chunkDimensions.count)
 
@@ -113,6 +116,9 @@ extension GroupType {
         let chunkDimensions64 = chunkDimensions.map({ hsize_t(bitPattern: hssize_t($0)) })
         chunkDimensions64.withUnsafeBufferPointer { (pointer) -> Void in
             H5Pset_chunk(plist, Int32(chunkDimensions.count), pointer.baseAddress)
+        }
+        if let compression = compression {
+            H5Pset_deflate(plist, UInt32(compression))
         }
         defer {
             H5Pclose(plist)
@@ -126,13 +132,19 @@ extension GroupType {
     }
 
     /// Create a TypedDataset and write data
-    public func createAndWriteDataset<T: HDF5Representable>(_ name: String, dims: [Int], data: [T]) throws -> TypedDataset<T> {
+    public func createAndWriteDataset<T: HDF5Representable>(_ name: String, dims: [Int], data: [T], chunkDimensions: [Int]? = nil, compression: Int? = nil) throws -> TypedDataset<T> {
         let space = Dataspace(dims: dims)
-        guard let set: TypedDataset<T> = createDataset(name, dataspace: space) else {
+        let set: TypedDataset<T>?
+        if let chunkDimensions = chunkDimensions {
+            set = createDataset(name, dataspace: space, chunkDimensions: chunkDimensions, compression: compression)
+        } else {
+            set = createDataset(name, dataspace: space, compression: compression)
+        }
+        guard let dataset = set else {
             throw Error.lastError()
         }
-        try set.write(data)
-        return set
+        try dataset.write(data)
+        return dataset
     }
 
     /// Open an existing TypedDataset

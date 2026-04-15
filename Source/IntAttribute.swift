@@ -10,7 +10,7 @@
 
 public typealias IntAttribute = TypedAttribute<Int>
 
-extension GroupType {
+extension AttributeHost {
     public func createIntAttribute(_ name: String, dataspace: Dataspace) -> IntAttribute? {
         return createAttribute(name, dataspace: dataspace)
     }

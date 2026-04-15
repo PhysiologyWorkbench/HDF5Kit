@@ -11,12 +11,12 @@
 public typealias IntDataset = TypedDataset<Int>
 
 extension GroupType {
-    public func createIntDataset(_ name: String, dataspace: Dataspace) -> IntDataset? {
-        return createDataset(name, dataspace: dataspace)
+    public func createIntDataset(_ name: String, dataspace: Dataspace, compression: Int? = nil) -> IntDataset? {
+        return createDataset(name, dataspace: dataspace, compression: compression)
     }
 
-    public func createIntDataset(_ name: String, dataspace: Dataspace, chunkDimensions: [Int]) -> IntDataset? {
-        return createDataset(name, dataspace: dataspace, chunkDimensions: chunkDimensions)
+    public func createIntDataset(_ name: String, dataspace: Dataspace, chunkDimensions: [Int], compression: Int? = nil) -> IntDataset? {
+        return createDataset(name, dataspace: dataspace, chunkDimensions: chunkDimensions, compression: compression)
     }
 
     public func openIntDataset(_ name: String) -> IntDataset? {

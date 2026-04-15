@@ -54,6 +54,6 @@ Here is a comprehensive specialist review identifying the architectural shortcom
 
 - [x] Comprehensive review of the codebase and identification of architectural shortcomings.
 - [x] Proposed action plan for Swift 6 modernisation.
-- [ ] Phase 1: Foundation & Swift 6 Compliance
-- [ ] Phase 2: Code Consolidation (Preserving API via Typealiases)
-- [ ] Phase 3: Filling the Feature Gaps (Additive API changes)
+- [x] Phase 1: Foundation & Swift 6 Compliance
+- [x] Phase 2: Code Consolidation (Preserving API via Typealiases)
+- [x] Phase 3: Filling the Feature Gaps (Additive API changes)

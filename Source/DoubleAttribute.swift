@@ -10,7 +10,7 @@
 
 public typealias DoubleAttribute = TypedAttribute<Double>
 
-extension GroupType {
+extension AttributeHost {
     public func createDoubleAttribute(_ name: String, dataspace: Dataspace) -> DoubleAttribute? {
         return createAttribute(name, dataspace: dataspace)
     }

@@ -156,7 +156,10 @@ public class StringDataset: TypedDataset<String> {
 }
 
 extension GroupType {
-    public func createStringDataset(_ name: String, dataspace: Dataspace) -> StringDataset? {
+    public func createStringDataset(_ name: String, dataspace: Dataspace, compression: Int? = nil) -> StringDataset? {
+        if let compression = compression {
+            return createStringDataset(name, dataspace: dataspace, chunkDimensions: dataspace.dims, compression: compression)
+        }
         guard let datatype = Datatype(type: String.self) else {
             return nil
         }
@@ -167,7 +170,7 @@ extension GroupType {
         return StringDataset(id: datasetID)
     }
 
-    public func createStringDataset(_ name: String, dataspace: Dataspace, chunkDimensions: [Int]) -> StringDataset? {
+    public func createStringDataset(_ name: String, dataspace: Dataspace, chunkDimensions: [Int], compression: Int? = nil) -> StringDataset? {
         guard let datatype = Datatype(type: String.self) else {
             return nil
         }
@@ -178,6 +181,9 @@ extension GroupType {
         let chunkDimensions64 = chunkDimensions.map({ hsize_t(bitPattern: hssize_t($0)) })
         chunkDimensions64.withUnsafeBufferPointer { (pointer) -> Void in
             H5Pset_chunk(plist, Int32(chunkDimensions.count), pointer.baseAddress)
+        }
+        if let compression = compression {
+            H5Pset_deflate(plist, UInt32(compression))
         }
         defer {
             H5Pclose(plist)

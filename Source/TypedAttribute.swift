@@ -27,9 +27,9 @@ open class TypedAttribute<T: HDF5Representable>: Attribute {
     }
 }
 
-// MARK: GroupType extension for TypedAttribute
+// MARK: AttributeHost extension for TypedAttribute
 
-extension GroupType {
+extension AttributeHost {
     public func createAttribute<T: HDF5Representable>(_ name: String, dataspace: Dataspace) -> TypedAttribute<T>? {
         if T.self == String.self {
             return createStringAttribute(name) as? TypedAttribute<T>

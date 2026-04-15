@@ -10,7 +10,7 @@
 
 public typealias FloatAttribute = TypedAttribute<Float>
 
-extension GroupType {
+extension AttributeHost {
     public func createFloatAttribute(_ name: String, dataspace: Dataspace) -> FloatAttribute? {
         return createAttribute(name, dataspace: dataspace)
     }

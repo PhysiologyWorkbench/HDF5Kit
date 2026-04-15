@@ -9,7 +9,7 @@
 #endif
 
 @HDF5Actor
-public protocol GroupType {
+public protocol GroupType: AttributeHost {
     var id: hid_t { get }
 }
 
@@ -60,5 +60,38 @@ public class Group: Object, GroupType {
         }
 
         return names
+    }
+
+    /// Create a soft link
+    public func createSoftLink(targetPath: String, linkName: String) throws {
+        let status = targetPath.withCString { target in
+            linkName.withCString { link in
+                H5Lcreate_soft(target, id, link, 0, 0)
+            }
+        }
+        if status < 0 {
+            throw Error.lastError()
+        }
+    }
+
+    /// Create an external link
+    public func createExternalLink(fileName: String, objectName: String, linkName: String) throws {
+        let status = fileName.withCString { file in
+            objectName.withCString { obj in
+                linkName.withCString { link in
+                    H5Lcreate_external(file, obj, id, link, 0, 0)
+                }
+            }
+        }
+        if status < 0 {
+            throw Error.lastError()
+        }
+    }
+
+    /// Check if a link exists
+    public func linkExists(_ name: String) -> Bool {
+        return name.withCString { name in
+            H5Lexists(id, name, 0) > 0
+        }
     }
 }
