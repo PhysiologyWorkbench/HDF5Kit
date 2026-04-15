@@ -4,39 +4,39 @@
 // terms governing use, modification, and redistribution, is contained in the
 // file LICENSE at the root of the source code distribution tree.
 
-import XCTest
+import Testing
 import HDF5Kit
 
 @HDF5Actor
-class DataspaceTests: XCTestCase {
+struct DataspaceTests {
 
-    func testDimensions() async {
+    @Test func dimensions() async {
         let height = 10
         let width = 4
         let dataspace = await Dataspace(dims: [height, width], maxDims: [-1, -1])
         let dims = await dataspace.dims
-        XCTAssertEqual(dims.count, 2)
-        XCTAssertEqual(dims[0], height)
-        XCTAssertEqual(dims[1], width)
+        #expect(dims.count == 2)
+        #expect(dims[0] == height)
+        #expect(dims[1] == width)
     }
 
-    func testMaxDimensions() async {
+    @Test func maxDimensions() async {
         let height = 10
         let width = 4
         let dataspace = await Dataspace(dims: [height, width], maxDims: [-1, -1])
         let maxDims = await dataspace.maxDims
-        XCTAssertEqual(maxDims.count, 2)
-        XCTAssertEqual(maxDims[0], -1)
-        XCTAssertEqual(maxDims[1], -1)
+        #expect(maxDims.count == 2)
+        #expect(maxDims[0] == -1)
+        #expect(maxDims[1] == -1)
     }
 
-    func testSelect() async {
+    @Test func select() async {
         let height = 10
         let width = 4
         let dataspace = await Dataspace(dims: [height, width])
         await dataspace.select(start: [1, 1], stride: [1, 1], count: [3, 2], block: [1, 1])
         let selectionSize = await dataspace.selectionSize
-        XCTAssertEqual(selectionSize, 6)
+        #expect(selectionSize == 6)
     }
 
 }

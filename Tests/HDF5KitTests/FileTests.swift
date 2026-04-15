@@ -4,11 +4,11 @@
 // terms governing use, modification, and redistribution, is contained in the
 // file LICENSE at the root of the source code distribution tree.
 
-import XCTest
+import Testing
 import HDF5Kit
 
 @HDF5Actor
-class FileTests: XCTestCase {
+struct FileTests {
     let width = 100
     let height = 100
     let datasetName = "MyData"
@@ -20,7 +20,7 @@ class FileTests: XCTestCase {
         try await dataset.write(data)
     }
 
-    func testWriteRead() async throws {
+    @Test func writeRead() async throws {
         let filePath = await tempFilePath()
         let data = (0..<width*height).map { Double($0) }
         try await writeData(filePath: filePath, data: data)
@@ -28,23 +28,23 @@ class FileTests: XCTestCase {
         let file = await openFile(filePath)
         let dataset = await file.openDoubleDataset(datasetName)!
         let readData = try await dataset.read()
-        XCTAssertEqual(data, readData)
+        #expect(data == readData)
     }
 
-    func testCreateDataset() async {
+    @Test func createDataset() async {
         let filePath = await tempFilePath()
         let file = await createFile(filePath)
         let dims = [width, height]
         let dataspace = await Dataspace(dims: [width, height])
         
         let size = await dataspace.size
-        XCTAssertEqual(size, width * height)
+        #expect(size == width * height)
         
         let actualDims = await dataspace.dims
-        XCTAssertEqual(actualDims, dims)
+        #expect(actualDims == dims)
 
         let dataset = await file.createDoubleDataset(datasetName, dataspace: dataspace)!
         let offset = await dataset.offset
-        XCTAssertNil(offset)
+        #expect(offset == nil)
     }
 }

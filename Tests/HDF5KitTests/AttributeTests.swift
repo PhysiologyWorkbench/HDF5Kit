@@ -4,28 +4,28 @@
 // terms governing use, modification, and redistribution, is contained in the
 // file LICENSE at the root of the source code distribution tree.
 
-import XCTest
+import Testing
 import HDF5Kit
 
 @HDF5Actor
-class AttributeTests: XCTestCase {
+struct AttributeTests {
 
-    func testName() async {
+    @Test func name() async {
         let filePath = await tempFilePath()
         guard let file = await File.create(filePath, mode: .truncate) else {
             fatalError("Failed to create file")
         }
         let group = await file.createGroup("group")
         let name = await group.name
-        XCTAssertEqual(name, "/group")
+        #expect(name == "/group")
 
         let dataspace = await Dataspace(dims: [4])
         let attribute = await group.createIntAttribute("attribute", dataspace: dataspace)!
         let attrName = await attribute.name
-        XCTAssertEqual(attrName, "attribute")
+        #expect(attrName == "attribute")
     }
 
-    func testWriteReadInt() async throws {
+    @Test func writeReadInt() async throws {
         let filePath = await tempFilePath()
         guard let file = await File.create(filePath, mode: .truncate) else {
             fatalError("Failed to create file")
@@ -36,10 +36,10 @@ class AttributeTests: XCTestCase {
         try await attribute.write([10])
 
         let result: [Int] = try await attribute.read()
-        XCTAssertEqual(result, [10])
+        #expect(result == [10])
     }
 
-    func testWriteReadFixedString() async throws {
+    @Test func writeReadFixedString() async throws {
         let filePath = await tempFilePath()
         guard let file = await File.create(filePath, mode: .truncate) else {
             fatalError("Failed to create file")
@@ -50,10 +50,10 @@ class AttributeTests: XCTestCase {
         try await attribute.write("abc")
 
         let result: [String] = try await attribute.read()
-        XCTAssertEqual(result, ["abc"])
+        #expect(result == ["abc"])
     }
 
-    func testWriteReadString() async throws {
+    @Test func writeReadString() async throws {
         let filePath = await tempFilePath()
         guard let file = await File.create(filePath, mode: .truncate) else {
             fatalError("Failed to create file")
@@ -63,6 +63,6 @@ class AttributeTests: XCTestCase {
         try await attribute.write("abc")
 
         let result: [String] = try await attribute.read()
-        XCTAssertEqual(result, ["abc"])
+        #expect(result == ["abc"])
     }
 }

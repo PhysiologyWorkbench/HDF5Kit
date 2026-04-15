@@ -5,14 +5,14 @@
 // terms governing use, modification, and redistribution, is contained in the
 // file LICENSE at the root of the source code distribution tree.
 
-import XCTest
+import Testing
 import HDF5Kit
 
 @HDF5Actor
-class HyperslabTests: XCTestCase {
+struct HyperslabTests {
     let datasetName = "MyData"
 
-    func testDoubleWriteRead() async throws {
+    @Test func doubleWriteRead() async throws {
         let filePath = await tempFilePath()
         let file = await createFile(filePath)
 
@@ -24,10 +24,10 @@ class HyperslabTests: XCTestCase {
         try await dataset.write(data)
 
         let readData: [Double] = try await dataset.read()
-        XCTAssertEqual(data, readData)
+        #expect(data == readData)
     }
 
-    func testSlab2DReadDouble() async throws {
+    @Test func slab2DReadDouble() async throws {
         let filePath = await tempFilePath()
         let file = await createFile(filePath)
 
@@ -43,19 +43,19 @@ class HyperslabTests: XCTestCase {
 
         let memSpace = await Dataspace(dims: [3, 3])
         let readData: [Double] = try await dataset.read(memSpace: memSpace, fileSpace: fileSpace)
-        XCTAssertEqual(readData.count, 9)
-        XCTAssertEqual(readData[0], 11)
-        XCTAssertEqual(readData[1], 12)
-        XCTAssertEqual(readData[2], 13)
-        XCTAssertEqual(readData[3], 21)
-        XCTAssertEqual(readData[4], 22)
-        XCTAssertEqual(readData[5], 23)
-        XCTAssertEqual(readData[6], 31)
-        XCTAssertEqual(readData[7], 32)
-        XCTAssertEqual(readData[8], 33)
+        #expect(readData.count == 9)
+        #expect(readData[0] == 11)
+        #expect(readData[1] == 12)
+        #expect(readData[2] == 13)
+        #expect(readData[3] == 21)
+        #expect(readData[4] == 22)
+        #expect(readData[5] == 23)
+        #expect(readData[6] == 31)
+        #expect(readData[7] == 32)
+        #expect(readData[8] == 33)
     }
 
-    func testSlab3DRead() async throws {
+    @Test func slab3DRead() async throws {
         let filePath = await tempFilePath()
         let file = await createFile(filePath)
 
@@ -71,18 +71,18 @@ class HyperslabTests: XCTestCase {
 
         let memSpace = await Dataspace(dims: [2, 2, 2])
         let readData: [Double] = try await dataset.read(memSpace: memSpace, fileSpace: fileSpace)
-        XCTAssertEqual(readData.count, 8)
-        XCTAssertEqual(readData[0], 31)
-        XCTAssertEqual(readData[1], 32)
-        XCTAssertEqual(readData[2], 36)
-        XCTAssertEqual(readData[3], 37)
-        XCTAssertEqual(readData[4], 56)
-        XCTAssertEqual(readData[5], 57)
-        XCTAssertEqual(readData[6], 61)
-        XCTAssertEqual(readData[7], 62)
+        #expect(readData.count == 8)
+        #expect(readData[0] == 31)
+        #expect(readData[1] == 32)
+        #expect(readData[2] == 36)
+        #expect(readData[3] == 37)
+        #expect(readData[4] == 56)
+        #expect(readData[5] == 57)
+        #expect(readData[6] == 61)
+        #expect(readData[7] == 62)
     }
 
-    func testStringWriteRead() async throws {
+    @Test func stringWriteRead() async throws {
         let filePath = await tempFilePath()
         let file = await createFile(filePath)
 
@@ -94,10 +94,10 @@ class HyperslabTests: XCTestCase {
         try await dataset.write(data)
 
         let readData: [String] = try await dataset.read()
-        XCTAssertEqual(data, readData)
+        #expect(data == readData)
     }
 
-    func testReadStringSlab() async throws {
+    @Test func readStringSlab() async throws {
         let filePath = await tempFilePath()
         let file = await createFile(filePath)
 
@@ -112,13 +112,13 @@ class HyperslabTests: XCTestCase {
         await fileSpace.select(start: [1], stride: [1], count: [3], block: [1])
 
         let readData: [String] = try await dataset.read(fileSpace: fileSpace)
-        XCTAssertEqual(readData.count, 3)
-        XCTAssertEqual(readData[0], "1")
-        XCTAssertEqual(readData[1], "2")
-        XCTAssertEqual(readData[2], "3")
+        #expect(readData.count == 3)
+        #expect(readData[0] == "1")
+        #expect(readData[1] == "2")
+        #expect(readData[2] == "3")
     }
 
-    func testSlab2DReadString() async throws {
+    @Test func slab2DReadString() async throws {
         let filePath = await tempFilePath()
         let file = await createFile(filePath)
 
@@ -133,15 +133,15 @@ class HyperslabTests: XCTestCase {
         await fileSpace.select(start: [1, 1], stride: [1, 1], count: [3, 3], block: [1, 1])
 
         let readData: [String] = try await dataset.read(fileSpace: fileSpace)
-        XCTAssertEqual(readData.count, 9)
-        XCTAssertEqual(readData[0], "11")
-        XCTAssertEqual(readData[1], "12")
-        XCTAssertEqual(readData[2], "13")
-        XCTAssertEqual(readData[3], "21")
-        XCTAssertEqual(readData[4], "22")
-        XCTAssertEqual(readData[5], "23")
-        XCTAssertEqual(readData[6], "31")
-        XCTAssertEqual(readData[7], "32")
-        XCTAssertEqual(readData[8], "33")
+        #expect(readData.count == 9)
+        #expect(readData[0] == "11")
+        #expect(readData[1] == "12")
+        #expect(readData[2] == "13")
+        #expect(readData[3] == "21")
+        #expect(readData[4] == "22")
+        #expect(readData[5] == "23")
+        #expect(readData[6] == "31")
+        #expect(readData[7] == "32")
+        #expect(readData[8] == "33")
     }
 }
