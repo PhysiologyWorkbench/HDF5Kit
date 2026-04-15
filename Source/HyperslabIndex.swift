@@ -29,7 +29,7 @@ public protocol HyperslabIndexType {
 }
 
 public struct HyperslabIndex: HyperslabIndexType {
-    static let all = Int.max - 1
+    public static let all = Int.max - 1
 
     public var start: Int
     public var stride: Int

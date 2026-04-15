@@ -9,9 +9,13 @@
 #endif
 
 public class StringDataset: Dataset {
-    open subscript(slices: HyperslabIndexType...) -> [String] {
-        // There is a problem with Swift where it gives a compiler error if `set` is implemented here
-        return (try? read(slices)) ?? []
+    public subscript(slices: HyperslabIndexType...) -> [String] {
+        get {
+            return (try? read(slices)) ?? []
+        }
+        set {
+            try! write(newValue, to: slices)
+        }
     }
 
     public subscript(slices: [HyperslabIndexType]) -> [String] {
@@ -71,7 +75,7 @@ public class StringDataset: Dataset {
         let memspace = Dataspace(dims: [count])
         let status = H5Dread(id, type.id, memspace.id, fileSpace?.id ?? 0, 0, &data)
         if status < 0 {
-            throw Error.ioError
+            throw Error.lastError()
         }
 
         var strings = [String]()
@@ -108,7 +112,7 @@ public class StringDataset: Dataset {
         let memspace = Dataspace(dims: [count])
         let status = H5Dread(id, type.id, memspace.id, fileSpace?.id ?? 0, 0, &data)
         if status < 0 {
-            throw Error.ioError
+            throw Error.lastError()
         }
 
         return data.withUnsafeBufferPointer { pointer in
@@ -152,7 +156,7 @@ public class StringDataset: Dataset {
             let memspace = Dataspace(dims: [size])
             let type = Datatype.createString()
             guard H5Dwrite(id, type.id, memspace.id, fileSpace?.id ?? 0, 0, pointers) >= 0 else {
-                throw Error.ioError
+                throw Error.lastError()
             }
         }
     }
@@ -206,6 +210,14 @@ extension GroupType {
             return H5Dcreate2(id, name, datatype.id, dataspace.id, 0, plist, 0)
         }
         return StringDataset(id: datasetID)
+    }
+
+    /// Create an String Dataset and write data
+    public func createAndWriteDataset(_ name: String, dims: [Int], data: [String]) throws -> StringDataset {
+        let space = Dataspace(dims: dims)
+        let set = createStringDataset(name, dataspace: space)!
+        try set.write(data)
+        return set
     }
 
     /// Open an existing StringDataset

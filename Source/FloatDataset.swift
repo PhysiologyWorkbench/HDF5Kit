@@ -10,8 +10,12 @@
 
 public class FloatDataset: Dataset {
     public subscript(slices: HyperslabIndexType...) -> [Float] {
-        // There is a problem with Swift where it gives a compiler error if `set` is implemented here
-        return (try? read(slices)) ?? []
+        get {
+            return (try? read(slices)) ?? []
+        }
+        set {
+            try! write(newValue, to: slices)
+        }
     }
 
     public subscript(slices: [HyperslabIndexType]) -> [Float] {
@@ -26,15 +30,16 @@ public class FloatDataset: Dataset {
     public func read(_ slices: [HyperslabIndexType]) throws -> [Float] {
         let filespace = space
         filespace.select(slices)
-        return try read(memSpace: Dataspace(dims: filespace.selectionDims), fileSpace: filespace)
-   }
+        let memspace = Dataspace(dims: filespace.selectionDims)
+        return try read(memSpace: memspace, fileSpace: filespace)
+    }
 
     public func write(_ data: [Float], to slices: [HyperslabIndexType]) throws {
         let filespace = space
         filespace.select(slices)
-        try write(data, memSpace: Dataspace(dims: filespace.selectionDims), fileSpace: filespace)
+        let memspace = Dataspace(dims: filespace.selectionDims)
+        try write(data, memSpace: memspace, fileSpace: filespace)
     }
-
     /// Append data to the table
     public func append(_ data: [Float], dimensions: [Int], axis: Int = 0) throws {
         let oldExtent = extent
