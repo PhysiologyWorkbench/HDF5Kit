@@ -30,14 +30,14 @@ public class FloatDataset: Dataset {
     public func read(_ slices: [HyperslabIndexType]) throws -> [Float] {
         let filespace = space
         filespace.select(slices)
-        let memspace = Dataspace(dims: filespace.selectionDims)
+        let memspace = Dataspace(dims: [filespace.selectionSize])
         return try read(memSpace: memspace, fileSpace: filespace)
     }
 
     public func write(_ data: [Float], to slices: [HyperslabIndexType]) throws {
         let filespace = space
         filespace.select(slices)
-        let memspace = Dataspace(dims: filespace.selectionDims)
+        let memspace = Dataspace(dims: [filespace.selectionSize])
         try write(data, memSpace: memspace, fileSpace: filespace)
     }
     /// Append data to the table

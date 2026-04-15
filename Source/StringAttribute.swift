@@ -20,7 +20,8 @@ open class StringAttribute: Attribute {
     }
 
     func readVariableLength() throws -> [String] {
-        let count = self.space.selectionSize
+        let space = self.space
+        let count = space.selectionSize
         let type = Datatype.createString()
         var data = [UnsafePointer<CChar>?](repeating: nil, count: count)
         try data.withUnsafeMutableBufferPointer { pointer in

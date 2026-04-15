@@ -14,7 +14,7 @@ postfix operator ..
 prefix operator ..
 
 public postfix func .. (lhs: Int) -> ClosedRange<Int> {
-    return lhs...HyperslabIndex.all
+    return lhs...HyperslabIndex.allValue
 }
 
 public prefix func .. (rhs: Int) -> ClosedRange<Int> {
@@ -28,8 +28,11 @@ public protocol HyperslabIndexType {
     var blockSize: Int { get }
 }
 
-public struct HyperslabIndex: HyperslabIndexType {
-    public static let all = Int.max - 1
+public struct HyperslabIndex: HyperslabIndexType, Sendable {
+    /// A constant that represents the entire remaining dimension.
+    public static let allValue = Int.max - 1
+    
+    public static let all = HyperslabIndex(start: 0, stride: 1, count: allValue, blockSize: 1)
 
     public var start: Int
     public var stride: Int
@@ -95,10 +98,11 @@ extension ClosedRange: HyperslabIndexType {
     }
 
     public var blockCount: Int {
-        if unsafeBitCast(upperBound, to: Int.self) == HyperslabIndex.all {
-            return HyperslabIndex.all
+        let end = unsafeBitCast(upperBound, to: Int.self)
+        if end == HyperslabIndex.allValue {
+            return HyperslabIndex.allValue
         }
-        return unsafeBitCast(upperBound, to: Int.self) - start + 1
+        return end - start + 1
     }
 
     public var blockSize: Int {
@@ -116,10 +120,11 @@ extension Range: HyperslabIndexType {
     }
 
     public var blockCount: Int {
-        if unsafeBitCast(upperBound, to: Int.self) == HyperslabIndex.all + 1 {
-            return HyperslabIndex.all
+        let end = unsafeBitCast(upperBound, to: Int.self)
+        if end == HyperslabIndex.allValue + 1 {
+            return HyperslabIndex.allValue
         }
-        return unsafeBitCast(upperBound, to: Int.self) - start
+        return end - start
     }
 
     public var blockSize: Int {

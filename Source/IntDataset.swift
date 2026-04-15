@@ -30,14 +30,14 @@ public class IntDataset: Dataset {
     public func read(_ slices: [HyperslabIndexType]) throws -> [Int] {
         let filespace = space
         filespace.select(slices)
-        let memspace = Dataspace(dims: filespace.selectionDims)
+        let memspace = Dataspace(dims: [filespace.selectionSize])
         return try read(memSpace: memspace, fileSpace: filespace)
     }
 
     public func write(_ data: [Int], to slices: [HyperslabIndexType]) throws {
         let filespace = space
         filespace.select(slices)
-        let memspace = Dataspace(dims: filespace.selectionDims)
+        let memspace = Dataspace(dims: [filespace.selectionSize])
         try write(data, memSpace: memspace, fileSpace: filespace)
     }
 

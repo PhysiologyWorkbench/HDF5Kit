@@ -63,17 +63,13 @@ public class StringDataset: Dataset {
     }
 
     func readVariableLength(fileSpace: Dataspace? = nil) throws -> [String] {
-        let count: Int
-        if let fileSpace = fileSpace {
-            count = fileSpace.selectionSize
-        } else {
-            count = self.space.selectionSize
-        }
+        let space = fileSpace ?? self.space
+        let count = space.selectionSize
 
         let type = Datatype.createString()
         var data = [UnsafePointer<CChar>?](repeating: nil, count: count)
         let memspace = Dataspace(dims: [count])
-        let status = H5Dread(id, type.id, memspace.id, fileSpace?.id ?? 0, 0, &data)
+        let status = H5Dread(id, type.id, memspace.id, space.id, 0, &data)
         if status < 0 {
             throw Error.lastError()
         }

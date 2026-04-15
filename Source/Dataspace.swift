@@ -142,7 +142,7 @@ public class Dataspace {
             if index >= rank { break }
             start[index] = slice.start
             stride[index] = slice.stride
-            if slice.blockCount != HyperslabIndex.all {
+            if slice.blockCount != HyperslabIndex.allValue {
                 count[index] = slice.blockCount
             } else {
                 let remaining = dims[index] - slice.start
