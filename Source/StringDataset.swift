@@ -57,7 +57,7 @@ public class StringDataset: TypedDataset<String> {
         let memspace = Dataspace(dims: [count])
         let status = H5Dread(id, type.id, memspace.id, space.id, 0, &data)
         if status < 0 {
-            throw Error.lastError()
+            throw HDF5Error.lastError()
         }
 
         var strings = [String]()
@@ -94,7 +94,7 @@ public class StringDataset: TypedDataset<String> {
         let memspace = Dataspace(dims: [count])
         let status = H5Dread(id, type.id, memspace.id, fileSpace?.id ?? 0, 0, &data)
         if status < 0 {
-            throw Error.lastError()
+            throw HDF5Error.lastError()
         }
 
         return data.withUnsafeBufferPointer { pointer in
@@ -137,7 +137,7 @@ public class StringDataset: TypedDataset<String> {
             let memspace = Dataspace(dims: [size])
             let type = Datatype.createString()
             guard H5Dwrite(id, type.id, memspace.id, fileSpace?.id ?? 0, 0, pointers) >= 0 else {
-                throw Error.lastError()
+                throw HDF5Error.lastError()
             }
         }
     }

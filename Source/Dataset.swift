@@ -41,14 +41,14 @@ open class Dataset: Object, AttributeHost {
     open func read(into pointer: UnsafeMutableRawPointer, type: NativeType, memSpace: Dataspace? = nil, fileSpace: Dataspace? = nil) throws {
         let status = H5Dread(id, type.rawValue, memSpace?.id ?? 0, fileSpace?.id ?? 0, 0, pointer)
         if status < 0 {
-            throw Error.lastError()
+            throw HDF5Error.lastError()
         }
     }
 
     open func write(from pointer: UnsafeRawPointer, type: NativeType, memSpace: Dataspace? = nil, fileSpace: Dataspace? = nil) throws {
         let status = H5Dwrite(id, type.rawValue, memSpace?.id ?? 0, fileSpace?.id ?? 0, 0, pointer);
         if status < 0 {
-            throw Error.lastError()
+            throw HDF5Error.lastError()
         }
     }
 }

@@ -8,6 +8,7 @@
     @preconcurrency import CHDF5
 #endif
 
+@HDF5Actor
 public enum DataClass: Int32 {
     case noClass   = -1  // error
     case integer   = 0   // integer types
@@ -24,6 +25,7 @@ public enum DataClass: Int32 {
 }
 
 
+@HDF5Actor
 public class Datatype : Object, Equatable {
     override init(id: hid_t) {
         super.init(id: id)

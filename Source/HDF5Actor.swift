@@ -11,4 +11,14 @@ import Foundation
 public final actor HDF5Actor {
     public static let shared = HDF5Actor()
     private init() {}
+
+    /// A global lock to synchronize access to the HDF5 library, even from non-isolated contexts like `deinit`.
+    static let lock = NSLock()
+
+    /// Executes a block of code synchronously while holding the global HDF5 lock.
+    public static func runSynchronously<T>(_ block: () throws -> T) rethrows -> T {
+        lock.lock()
+        defer { lock.unlock() }
+        return try block()
+    }
 }

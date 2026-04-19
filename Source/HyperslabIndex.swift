@@ -88,9 +88,9 @@ extension Int: HyperslabIndexType {
     }
 }
 
-extension ClosedRange: HyperslabIndexType {
+extension ClosedRange: HyperslabIndexType where Bound == Int {
     public var start: Int {
-        return unsafeBitCast(lowerBound, to: Int.self)
+        return lowerBound
     }
 
     public var stride: Int {
@@ -98,11 +98,10 @@ extension ClosedRange: HyperslabIndexType {
     }
 
     public var blockCount: Int {
-        let end = unsafeBitCast(upperBound, to: Int.self)
-        if end == HyperslabIndex.allValue {
+        if upperBound == HyperslabIndex.allValue {
             return HyperslabIndex.allValue
         }
-        return end - start + 1
+        return upperBound - start + 1
     }
 
     public var blockSize: Int {
@@ -110,9 +109,9 @@ extension ClosedRange: HyperslabIndexType {
     }
 }
 
-extension Range: HyperslabIndexType {
+extension Range: HyperslabIndexType where Bound == Int {
     public var start: Int {
-        return unsafeBitCast(lowerBound, to: Int.self)
+        return lowerBound
     }
 
     public var stride: Int {
@@ -120,11 +119,10 @@ extension Range: HyperslabIndexType {
     }
 
     public var blockCount: Int {
-        let end = unsafeBitCast(upperBound, to: Int.self)
-        if end == HyperslabIndex.allValue + 1 {
+        if upperBound == HyperslabIndex.allValue + 1 {
             return HyperslabIndex.allValue
         }
-        return end - start
+        return upperBound - start
     }
 
     public var blockSize: Int {

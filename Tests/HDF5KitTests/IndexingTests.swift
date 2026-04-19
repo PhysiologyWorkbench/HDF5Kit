@@ -21,97 +21,97 @@ struct IndexingTests {
     var file: File
 
     init() async {
-        let path = await tempFilePath()
+        let path = tempFilePath()
         self.filePath = path
-        self.file = await createFile(path)
+        self.file = createFile(path)
     }
 
     @Test func allReadDouble() async throws {
-        let dataset = try await file.createAndWriteDataset(IndexingTests.datasetName, dims: IndexingTests.datasetDims, data: IndexingTests.datasetDoubleData)
+        let dataset = try file.createAndWriteDataset(IndexingTests.datasetName, dims: IndexingTests.datasetDims, data: IndexingTests.datasetDoubleData)
         let readData: [Double] = dataset[HyperslabIndex.all, HyperslabIndex.all]
         #expect(readData == IndexingTests.datasetDoubleData)
     }
 
     @Test func sliceMiddleValue() async throws {
-        let dataset = try await file.createAndWriteDataset(IndexingTests.datasetName, dims: IndexingTests.datasetDims, data: IndexingTests.datasetDoubleData)
+        let dataset = try file.createAndWriteDataset(IndexingTests.datasetName, dims: IndexingTests.datasetDims, data: IndexingTests.datasetDoubleData)
         let readData: [Double] = dataset[1, 1]
         #expect(readData == [4.0])
     }
 
     @Test func sliceMiddleRow() async throws {
-        let dataset = try await file.createAndWriteDataset(IndexingTests.datasetName, dims: IndexingTests.datasetDims, data: IndexingTests.datasetDoubleData)
+        let dataset = try file.createAndWriteDataset(IndexingTests.datasetName, dims: IndexingTests.datasetDims, data: IndexingTests.datasetDoubleData)
         let readData: [Double] = dataset[1, HyperslabIndex.all]
         #expect(readData == [3.0, 4.0, 5.0])
     }
 
     @Test func sliceLastColumn() async throws {
-        let dataset = try await file.createAndWriteDataset(IndexingTests.datasetName, dims: IndexingTests.datasetDims, data: IndexingTests.datasetDoubleData)
+        let dataset = try file.createAndWriteDataset(IndexingTests.datasetName, dims: IndexingTests.datasetDims, data: IndexingTests.datasetDoubleData)
         let readData: [Double] = dataset[HyperslabIndex.all, 2]
         #expect(readData == [2.0, 5.0, 8.0])
     }
 
     @Test func sliceFirstTwoRowsDouble() async throws {
-        let dataset = try await file.createAndWriteDataset(IndexingTests.datasetName, dims: IndexingTests.datasetDims, data: IndexingTests.datasetDoubleData)
+        let dataset = try file.createAndWriteDataset(IndexingTests.datasetName, dims: IndexingTests.datasetDims, data: IndexingTests.datasetDoubleData)
         let readData: [Double] = dataset[0...1, HyperslabIndex.all]
         #expect(readData == [0.0, 1.0, 2.0, 3.0, 4.0, 5.0])
     }
 
     @Test func sliceLastTwoRows() async throws {
-        let dataset = try await file.createAndWriteDataset(IndexingTests.datasetName, dims: IndexingTests.datasetDims, data: IndexingTests.datasetDoubleData)
+        let dataset = try file.createAndWriteDataset(IndexingTests.datasetName, dims: IndexingTests.datasetDims, data: IndexingTests.datasetDoubleData)
         let readData: [Double] = dataset[1...2, HyperslabIndex.all]
         #expect(readData == [3.0, 4.0, 5.0, 6.0, 7.0, 8.0])
     }
 
     @Test func sliceFirstTwoColumnsDouble() async throws {
-        let dataset = try await file.createAndWriteDataset(IndexingTests.datasetName, dims: IndexingTests.datasetDims, data: IndexingTests.datasetDoubleData)
+        let dataset = try file.createAndWriteDataset(IndexingTests.datasetName, dims: IndexingTests.datasetDims, data: IndexingTests.datasetDoubleData)
         let readData: [Double] = dataset[HyperslabIndex.all, 0...1]
         #expect(readData == [0.0, 1.0, 3.0, 4.0, 6.0, 7.0])
     }
 
     @Test func sliceLastTwoColumns() async throws {
-        let dataset = try await file.createAndWriteDataset(IndexingTests.datasetName, dims: IndexingTests.datasetDims, data: IndexingTests.datasetDoubleData)
+        let dataset = try file.createAndWriteDataset(IndexingTests.datasetName, dims: IndexingTests.datasetDims, data: IndexingTests.datasetDoubleData)
         let readData: [Double] = dataset[HyperslabIndex.all, 1...2]
         #expect(readData == [1.0, 2.0, 4.0, 5.0, 7.0, 8.0])
     }
 
     @Test func sliceLastTwoColumnsOfLastTwoRows() async throws {
-        let dataset = try await file.createAndWriteDataset(IndexingTests.datasetName, dims: IndexingTests.datasetDims, data: IndexingTests.datasetDoubleData)
+        let dataset = try file.createAndWriteDataset(IndexingTests.datasetName, dims: IndexingTests.datasetDims, data: IndexingTests.datasetDoubleData)
         let readData: [Double] = dataset[1...2, 1...2]
         #expect(readData == [4.0, 5.0, 7.0, 8.0])
     }
 
     @Test func allReadInt() async throws {
-        let dataset = try await file.createAndWriteDataset(IndexingTests.datasetName, dims: IndexingTests.datasetDims, data: IndexingTests.datasetIntData)
+        let dataset = try file.createAndWriteDataset(IndexingTests.datasetName, dims: IndexingTests.datasetDims, data: IndexingTests.datasetIntData)
         let readData: [Int] = dataset[HyperslabIndex.all, HyperslabIndex.all]
         #expect(readData == IndexingTests.datasetIntData)
     }
 
     @Test func sliceFirstTwoRowsInt() async throws {
-        let dataset = try await file.createAndWriteDataset(IndexingTests.datasetName, dims: IndexingTests.datasetDims, data: IndexingTests.datasetIntData)
+        let dataset = try file.createAndWriteDataset(IndexingTests.datasetName, dims: IndexingTests.datasetDims, data: IndexingTests.datasetIntData)
         let readData: [Int] = dataset[0...1, HyperslabIndex.all]
         #expect(readData == [0, 1, 2, 3, 4, 5])
     }
 
     @Test func sliceFirstTwoColumnsInt() async throws {
-        let dataset = try await file.createAndWriteDataset(IndexingTests.datasetName, dims: IndexingTests.datasetDims, data: IndexingTests.datasetIntData)
+        let dataset = try file.createAndWriteDataset(IndexingTests.datasetName, dims: IndexingTests.datasetDims, data: IndexingTests.datasetIntData)
         let readData: [Int] = dataset[HyperslabIndex.all, 0...1]
         #expect(readData == [0, 1, 3, 4, 6, 7])
     }
 
     @Test func allReadString() async throws {
-        let dataset = try await file.createAndWriteDataset(IndexingTests.datasetName, dims: IndexingTests.datasetDims, data: IndexingTests.datasetStringData)
+        let dataset = try file.createAndWriteDataset(IndexingTests.datasetName, dims: IndexingTests.datasetDims, data: IndexingTests.datasetStringData)
         let readData: [String] = dataset[HyperslabIndex.all, HyperslabIndex.all]
         #expect(readData == IndexingTests.datasetStringData)
     }
 
     @Test func sliceFirstTwoRowsString() async throws {
-        let dataset = try await file.createAndWriteDataset(IndexingTests.datasetName, dims: IndexingTests.datasetDims, data: IndexingTests.datasetStringData)
+        let dataset = try file.createAndWriteDataset(IndexingTests.datasetName, dims: IndexingTests.datasetDims, data: IndexingTests.datasetStringData)
         let readData: [String] = dataset[0...1, HyperslabIndex.all]
         #expect(readData == ["0", "1", "2", "3", "4", "5"])
     }
 
     @Test func sliceFirstTwoColumnsString() async throws {
-        let dataset = try await file.createAndWriteDataset(IndexingTests.datasetName, dims: IndexingTests.datasetDims, data: IndexingTests.datasetStringData)
+        let dataset = try file.createAndWriteDataset(IndexingTests.datasetName, dims: IndexingTests.datasetDims, data: IndexingTests.datasetStringData)
         let readData: [String] = dataset[HyperslabIndex.all, 0...1]
         #expect(readData == ["0", "1", "3", "4", "6", "7"])
     }

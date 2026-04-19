@@ -22,8 +22,10 @@ public class Dataspace {
     }
 
     deinit {
-        if id >= 0 && H5Iis_valid(id) > 0 {
-            H5Sclose(id)
+        HDF5Actor.runSynchronously {
+            if id >= 0 && H5Iis_valid(id) > 0 {
+                H5Sclose(id)
+            }
         }
     }
 
@@ -105,7 +107,7 @@ public class Dataspace {
         let count64 = count?.map({ hsize_t(bitPattern: hssize_t($0)) })
         let block64 = block?.map({ hsize_t(bitPattern: hssize_t($0)) })
 
-        start64.withUnsafeBufferPointer { startPointer in
+        _ = start64.withUnsafeBufferPointer { startPointer in
             withOptionalUnsafeBufferPointer(stride64) { stridePointer in
                 withOptionalUnsafeBufferPointer(count64) { countPointer in
                     withOptionalUnsafeBufferPointer(block64) { blockPointer in

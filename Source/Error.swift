@@ -54,6 +54,3 @@ public enum HDF5Error: Swift.Error, CustomStringConvertible {
         H5Eset_auto2(0, nil, nil)
     }
 }
-
-// Keep the old Error name for compatibility.
-public typealias Error = HDF5Error

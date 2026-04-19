@@ -70,7 +70,7 @@ public class Group: Object, GroupType {
             }
         }
         if status < 0 {
-            throw Error.lastError()
+            throw HDF5Error.lastError()
         }
     }
 
@@ -84,7 +84,7 @@ public class Group: Object, GroupType {
             }
         }
         if status < 0 {
-            throw Error.lastError()
+            throw HDF5Error.lastError()
         }
     }
 

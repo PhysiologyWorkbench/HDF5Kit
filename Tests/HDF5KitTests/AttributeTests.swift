@@ -11,58 +11,58 @@ import HDF5Kit
 struct AttributeTests {
 
     @Test func name() async {
-        let filePath = await tempFilePath()
-        guard let file = await File.create(filePath, mode: .truncate) else {
+        let filePath = tempFilePath()
+        guard let file = File.create(filePath, mode: .truncate) else {
             fatalError("Failed to create file")
         }
-        let group = await file.createGroup("group")
-        let name = await group.name
+        let group = file.createGroup("group")
+        let name = group.name
         #expect(name == "/group")
 
-        let dataspace = await Dataspace(dims: [4])
-        let attribute = await group.createIntAttribute("attribute", dataspace: dataspace)!
-        let attrName = await attribute.name
+        let dataspace = Dataspace(dims: [4])
+        let attribute = group.createIntAttribute("attribute", dataspace: dataspace)!
+        let attrName = attribute.name
         #expect(attrName == "attribute")
     }
 
     @Test func writeReadInt() async throws {
-        let filePath = await tempFilePath()
-        guard let file = await File.create(filePath, mode: .truncate) else {
+        let filePath = tempFilePath()
+        guard let file = File.create(filePath, mode: .truncate) else {
             fatalError("Failed to create file")
         }
 
-        let dataspace = await Dataspace(dims: [1])
-        let attribute = await file.createIntAttribute("test", dataspace: dataspace)!
-        try await attribute.write([10])
+        let dataspace = Dataspace(dims: [1])
+        let attribute = file.createIntAttribute("test", dataspace: dataspace)!
+        try attribute.write([10])
 
-        let result: [Int] = try await attribute.read()
+        let result: [Int] = try attribute.read()
         #expect(result == [10])
     }
 
     @Test func writeReadFixedString() async throws {
-        let filePath = await tempFilePath()
-        guard let file = await File.create(filePath, mode: .truncate) else {
+        let filePath = tempFilePath()
+        guard let file = File.create(filePath, mode: .truncate) else {
             fatalError("Failed to create file")
         }
 
         let size = 3
-        let attribute = await file.createFixedStringAttribute("test", size: size)!
-        try await attribute.write("abc")
+        let attribute = file.createFixedStringAttribute("test", size: size)!
+        try attribute.write("abc")
 
-        let result: [String] = try await attribute.read()
+        let result: [String] = try attribute.read()
         #expect(result == ["abc"])
     }
 
     @Test func writeReadString() async throws {
-        let filePath = await tempFilePath()
-        guard let file = await File.create(filePath, mode: .truncate) else {
+        let filePath = tempFilePath()
+        guard let file = File.create(filePath, mode: .truncate) else {
             fatalError("Failed to create file")
         }
 
-        let attribute = await file.createStringAttribute("test")!
-        try await attribute.write("abc")
+        let attribute = file.createStringAttribute("test")!
+        try attribute.write("abc")
 
-        let result: [String] = try await attribute.read()
+        let result: [String] = try attribute.read()
         #expect(result == ["abc"])
     }
 }

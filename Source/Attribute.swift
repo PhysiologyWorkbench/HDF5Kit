@@ -18,8 +18,10 @@ open class Attribute {
     }
 
     deinit {
-        if id >= 0 && H5Iis_valid(id) > 0 {
-            H5Aclose(id)
+        HDF5Actor.runSynchronously {
+            if id >= 0 && H5Iis_valid(id) > 0 {
+                H5Aclose(id)
+            }
         }
     }
 
@@ -47,7 +49,7 @@ open class Attribute {
     open func read(into pointer: UnsafeMutableRawPointer, type: NativeType) throws {
         let status = H5Aread(id, type.rawValue, pointer)
         if status < 0 {
-            throw Error.lastError()
+            throw HDF5Error.lastError()
         }
     }
 
@@ -55,7 +57,7 @@ open class Attribute {
     open func write(from pointer: UnsafeRawPointer, type: NativeType) throws {
         let status = H5Awrite(id, type.rawValue, pointer);
         if status < 0 {
-            throw Error.lastError()
+            throw HDF5Error.lastError()
         }
     }
 }

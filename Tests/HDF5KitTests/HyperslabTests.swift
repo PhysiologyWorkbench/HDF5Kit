@@ -13,36 +13,36 @@ struct HyperslabTests {
     let datasetName = "MyData"
 
     @Test func doubleWriteRead() async throws {
-        let filePath = await tempFilePath()
-        let file = await createFile(filePath)
+        let filePath = tempFilePath()
+        let file = createFile(filePath)
 
         let dims = [10, 10]
-        let dataspace = await Dataspace(dims: dims)
-        let dataset = await file.createDoubleDataset(datasetName, dataspace: dataspace)!
+        let dataspace = Dataspace(dims: dims)
+        let dataset = file.createDoubleDataset(datasetName, dataspace: dataspace)!
 
         let data = (0..<100).map { Double($0) }
-        try await dataset.write(data)
+        try dataset.write(data)
 
-        let readData: [Double] = try await dataset.read()
+        let readData: [Double] = try dataset.read()
         #expect(data == readData)
     }
 
     @Test func slab2DReadDouble() async throws {
-        let filePath = await tempFilePath()
-        let file = await createFile(filePath)
+        let filePath = tempFilePath()
+        let file = createFile(filePath)
 
         let dims = [10, 10]
-        let dataspace = await Dataspace(dims: dims)
-        let dataset = await file.createDoubleDataset(datasetName, dataspace: dataspace)!
+        let dataspace = Dataspace(dims: dims)
+        let dataset = file.createDoubleDataset(datasetName, dataspace: dataspace)!
 
         let data = (0..<100).map { Double($0) }
-        try await dataset.write(data)
+        try dataset.write(data)
 
-        let fileSpace = await dataset.space
-        await fileSpace.select(start: [1, 1], stride: [1, 1], count: [3, 3], block: [1, 1])
+        let fileSpace = dataset.space
+        fileSpace.select(start: [1, 1], stride: [1, 1], count: [3, 3], block: [1, 1])
 
-        let memSpace = await Dataspace(dims: [3, 3])
-        let readData: [Double] = try await dataset.read(memSpace: memSpace, fileSpace: fileSpace)
+        let memSpace = Dataspace(dims: [3, 3])
+        let readData: [Double] = try dataset.read(memSpace: memSpace, fileSpace: fileSpace)
         #expect(readData.count == 9)
         #expect(readData[0] == 11)
         #expect(readData[1] == 12)
@@ -56,21 +56,21 @@ struct HyperslabTests {
     }
 
     @Test func slab3DRead() async throws {
-        let filePath = await tempFilePath()
-        let file = await createFile(filePath)
+        let filePath = tempFilePath()
+        let file = createFile(filePath)
 
         let dims = [5, 5, 5]
-        let dataspace = await Dataspace(dims: dims)
-        let dataset = await file.createDoubleDataset(datasetName, dataspace: dataspace)!
+        let dataspace = Dataspace(dims: dims)
+        let dataset = file.createDoubleDataset(datasetName, dataspace: dataspace)!
 
         let data = (0..<125).map { Double($0) }
-        try await dataset.write(data)
+        try dataset.write(data)
 
-        let fileSpace = await dataset.space
-        await fileSpace.select(start: [1, 1, 1], stride: [1, 1, 1], count: [2, 2, 2], block: [1, 1, 1])
+        let fileSpace = dataset.space
+        fileSpace.select(start: [1, 1, 1], stride: [1, 1, 1], count: [2, 2, 2], block: [1, 1, 1])
 
-        let memSpace = await Dataspace(dims: [2, 2, 2])
-        let readData: [Double] = try await dataset.read(memSpace: memSpace, fileSpace: fileSpace)
+        let memSpace = Dataspace(dims: [2, 2, 2])
+        let readData: [Double] = try dataset.read(memSpace: memSpace, fileSpace: fileSpace)
         #expect(readData.count == 8)
         #expect(readData[0] == 31)
         #expect(readData[1] == 32)
@@ -83,35 +83,35 @@ struct HyperslabTests {
     }
 
     @Test func stringWriteRead() async throws {
-        let filePath = await tempFilePath()
-        let file = await createFile(filePath)
+        let filePath = tempFilePath()
+        let file = createFile(filePath)
 
         let dims = [10]
-        let dataspace = await Dataspace(dims: dims)
-        let dataset = await file.createStringDataset(datasetName, dataspace: dataspace)!
+        let dataspace = Dataspace(dims: dims)
+        let dataset = file.createStringDataset(datasetName, dataspace: dataspace)!
 
         let data = (0..<10).map { String($0) }
-        try await dataset.write(data)
+        try dataset.write(data)
 
-        let readData: [String] = try await dataset.read()
+        let readData: [String] = try dataset.read()
         #expect(data == readData)
     }
 
     @Test func readStringSlab() async throws {
-        let filePath = await tempFilePath()
-        let file = await createFile(filePath)
+        let filePath = tempFilePath()
+        let file = createFile(filePath)
 
         let dims = [10]
-        let dataspace = await Dataspace(dims: dims)
-        let dataset = await file.createStringDataset(datasetName, dataspace: dataspace)!
+        let dataspace = Dataspace(dims: dims)
+        let dataset = file.createStringDataset(datasetName, dataspace: dataspace)!
 
         let data = (0..<10).map { String($0) }
-        try await dataset.write(data)
+        try dataset.write(data)
 
-        let fileSpace = await dataset.space
-        await fileSpace.select(start: [1], stride: [1], count: [3], block: [1])
+        let fileSpace = dataset.space
+        fileSpace.select(start: [1], stride: [1], count: [3], block: [1])
 
-        let readData: [String] = try await dataset.read(fileSpace: fileSpace)
+        let readData: [String] = try dataset.read(fileSpace: fileSpace)
         #expect(readData.count == 3)
         #expect(readData[0] == "1")
         #expect(readData[1] == "2")
@@ -119,20 +119,20 @@ struct HyperslabTests {
     }
 
     @Test func slab2DReadString() async throws {
-        let filePath = await tempFilePath()
-        let file = await createFile(filePath)
+        let filePath = tempFilePath()
+        let file = createFile(filePath)
 
         let dims = [10, 10]
-        let dataspace = await Dataspace(dims: dims)
-        let dataset = await file.createStringDataset(datasetName, dataspace: dataspace)!
+        let dataspace = Dataspace(dims: dims)
+        let dataset = file.createStringDataset(datasetName, dataspace: dataspace)!
 
         let data = (0..<100).map { String($0) }
-        try await dataset.write(data)
+        try dataset.write(data)
 
-        let fileSpace = await dataset.space
-        await fileSpace.select(start: [1, 1], stride: [1, 1], count: [3, 3], block: [1, 1])
+        let fileSpace = dataset.space
+        fileSpace.select(start: [1, 1], stride: [1, 1], count: [3, 3], block: [1, 1])
 
-        let readData: [String] = try await dataset.read(fileSpace: fileSpace)
+        let readData: [String] = try dataset.read(fileSpace: fileSpace)
         #expect(readData.count == 9)
         #expect(readData[0] == "11")
         #expect(readData[1] == "12")

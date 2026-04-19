@@ -28,7 +28,7 @@ extension TypedAttribute where T == String {
         try data.withUnsafeMutableBufferPointer { pointer in
             let status = H5Aread(id, type.id, pointer.baseAddress)
             if status < 0 {
-                throw Error.lastError()
+                throw HDF5Error.lastError()
             }
         }
 
@@ -57,7 +57,7 @@ extension TypedAttribute where T == String {
         try data.withUnsafeMutableBufferPointer { pointer in
             let status = H5Aread(id, type.id, pointer.baseAddress)
             if status < 0 {
-                throw Error.lastError()
+                throw HDF5Error.lastError()
             }
         }
 
@@ -98,7 +98,7 @@ extension TypedAttribute where T == String {
             try pointers.withUnsafeBufferPointer { pp in
                 let type = Datatype.createString()
                 guard H5Awrite(id, type.id, pp.baseAddress) >= 0 else {
-                    throw Error.lastError()
+                    throw HDF5Error.lastError()
                 }
             }
         }
@@ -117,7 +117,7 @@ extension TypedAttribute where T == String {
         try data.utf8CString.withUnsafeBufferPointer { pointer in
             let type = Datatype.createString(size: stringSize)
             guard H5Awrite(id, type.id, pointer.baseAddress) >= 0 else {
-                throw Error.lastError()
+                throw HDF5Error.lastError()
             }
         }
     }

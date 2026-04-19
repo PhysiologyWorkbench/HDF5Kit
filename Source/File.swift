@@ -22,7 +22,6 @@ public class File: Group {
 
     public class func create(_ filePath: String, mode: CreateMode) -> File? {
         H5open()
-        HDF5Error.silence()
 
         var id: hid_t = -1
         filePath.withCString { filePath in
@@ -36,7 +35,6 @@ public class File: Group {
 
     public class func open(_ filePath: String, mode: OpenMode) -> File? {
         H5open()
-        HDF5Error.silence()
 
         var id: hid_t = -1
         filePath.withCString { filePath in
@@ -52,12 +50,6 @@ public class File: Group {
         super.init(id: id)
         guard id >= 0 else {
             fatalError("Failed to create HDF5 File")
-        }
-    }
-
-    deinit {
-        if id >= 0 && H5Iis_valid(id) > 0 {
-            H5Fclose(id)
         }
     }
 

@@ -14,37 +14,37 @@ struct FileTests {
     let datasetName = "MyData"
 
     func writeData(filePath: String, data: [Double]) async throws {
-        let file = await createFile(filePath)
-        let dataspace = await Dataspace(dims: [width, height])
-        let dataset = await file.createDoubleDataset(datasetName, dataspace: dataspace)!
-        try await dataset.write(data)
+        let file = createFile(filePath)
+        let dataspace = Dataspace(dims: [width, height])
+        let dataset = file.createDoubleDataset(datasetName, dataspace: dataspace)!
+        try dataset.write(data)
     }
 
     @Test func writeRead() async throws {
-        let filePath = await tempFilePath()
+        let filePath = tempFilePath()
         let data = (0..<width*height).map { Double($0) }
         try await writeData(filePath: filePath, data: data)
 
-        let file = await openFile(filePath)
-        let dataset = await file.openDoubleDataset(datasetName)!
-        let readData = try await dataset.read()
+        let file = openFile(filePath)
+        let dataset = file.openDoubleDataset(datasetName)!
+        let readData = try dataset.read()
         #expect(data == readData)
     }
 
     @Test func createDataset() async {
-        let filePath = await tempFilePath()
-        let file = await createFile(filePath)
+        let filePath = tempFilePath()
+        let file = createFile(filePath)
         let dims = [width, height]
-        let dataspace = await Dataspace(dims: [width, height])
+        let dataspace = Dataspace(dims: [width, height])
         
-        let size = await dataspace.size
+        let size = dataspace.size
         #expect(size == width * height)
         
-        let actualDims = await dataspace.dims
+        let actualDims = dataspace.dims
         #expect(actualDims == dims)
 
-        let dataset = await file.createDoubleDataset(datasetName, dataspace: dataspace)!
-        let offset = await dataset.offset
+        let dataset = file.createDoubleDataset(datasetName, dataspace: dataspace)!
+        let offset = dataset.offset
         #expect(offset == nil)
     }
 }

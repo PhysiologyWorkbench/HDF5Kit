@@ -11,24 +11,24 @@ import HDF5Kit
 struct GroupTests {
 
     @Test func name() async {
-        let filePath = await tempFilePath()
-        guard let file = await File.create(filePath, mode: .truncate) else {
+        let filePath = tempFilePath()
+        guard let file = File.create(filePath, mode: .truncate) else {
             fatalError("Failed to create file")
         }
-        let group = await file.createGroup("group")
-        let name = await group.name
+        let group = file.createGroup("group")
+        let name = group.name
         #expect(name == "/group")
     }
 
     @Test func objectNames() async {
-        let filePath = await tempFilePath()
-        guard let file = await File.create(filePath, mode: .truncate) else {
+        let filePath = tempFilePath()
+        guard let file = File.create(filePath, mode: .truncate) else {
             fatalError("Failed to create file")
         }
-        _ = await file.createGroup("group1")
-        _ = await file.createGroup("group2")
+        _ = file.createGroup("group1")
+        _ = file.createGroup("group2")
 
-        let names = await file.objectNames()
+        let names = file.objectNames()
         #expect(names.count == 2)
         #expect(names.contains("group1"))
         #expect(names.contains("group2"))

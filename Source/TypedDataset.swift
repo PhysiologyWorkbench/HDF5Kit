@@ -53,11 +53,10 @@ open class TypedDataset<T: HDF5Representable>: Dataset {
             count = space.selectionSize
         }
 
-        let data = UnsafeMutablePointer<T>.allocate(capacity: count)
-        defer { data.deallocate() }
-
-        try read(into: data, type: T.hdf5Type, memSpace: memSpace, fileSpace: fileSpace)
-        return Array(UnsafeBufferPointer(start: data, count: count))
+        return try Array(unsafeUninitializedCapacity: count) { buffer, initializedCount in
+            try read(into: buffer.baseAddress!, type: T.hdf5Type, memSpace: memSpace, fileSpace: fileSpace)
+            initializedCount = count
+        }
     }
 
     open func write(_ data: [T], memSpace: Dataspace? = nil, fileSpace: Dataspace? = nil) throws {
@@ -141,7 +140,7 @@ extension GroupType {
             set = createDataset(name, dataspace: space, compression: compression)
         }
         guard let dataset = set else {
-            throw Error.lastError()
+            throw HDF5Error.lastError()
         }
         try dataset.write(data)
         return dataset
