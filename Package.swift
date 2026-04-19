@@ -10,19 +10,24 @@ let package = Package(
             targets: ["HDF5Kit"]),
     ],
     targets: [
-        .systemLibrary(
+        .target(
             name: "CHDF5",
             path: "Source/CHDF5",
-            pkgConfig: "hdf5",
-            providers: [
-                .brew(["hdf5"]),
-                .apt(["libhdf5-dev"])
-            ]),
+            sources: ["empty.c"],
+            publicHeadersPath: "include"),
         .target(
             name: "HDF5Kit",
             dependencies: ["CHDF5"],
             path: "Source",
-            exclude: ["CHDF5", "HDF5Kit.h"]),
+            exclude: ["CHDF5", "HDF5Kit.h"],
+            linkerSettings: [
+                .unsafeFlags([
+                    "/opt/homebrew/opt/hdf5/lib/libhdf5.a",
+                    "/opt/homebrew/lib/libsz.a",
+                    "/opt/homebrew/lib/libaec.a",
+                    "-lz", "-lm"
+                ])
+            ]),
         .testTarget(
             name: "HDF5KitTests",
             dependencies: ["HDF5Kit"]),
