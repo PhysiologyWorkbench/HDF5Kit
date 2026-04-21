@@ -18,22 +18,37 @@ let package = Package(
     targets: [
         .target(
             name: "CHDF5",
-            path: "Source/CHDF5",
-            sources: ["empty.c"],
-            publicHeadersPath: "include"),
+            path: ".",
+            exclude: [
+                "dist/src/CMakeLists.txt",
+                "dist/src/COPYING",
+                "dist/src/H5config.h.in",
+                "dist/src/H5detect.c",
+                "dist/src/H5err.txt",
+                "dist/src/H5make_libsettings.c",
+                "dist/src/H5overflow.txt",
+                "dist/src/H5vers.txt",
+                "dist/src/Makefile.am",
+                "dist/src/Makefile.in",
+                "dist/src/libhdf5.settings.in",
+            ],
+            sources: [
+                "Source/CHDF5/empty.c",
+                "dist/src",
+            ],
+            publicHeadersPath: "Source/CHDF5/include",
+            cSettings: [
+                .headerSearchPath("dist/src"),
+            ],
+            linkerSettings: [
+                .linkedLibrary("z"),
+                .linkedLibrary("m"),
+            ]),
         .target(
             name: "HDF5Kit",
             dependencies: ["CHDF5"],
             path: "Source",
-            exclude: ["CHDF5", "HDF5Kit.h"],
-            linkerSettings: [
-                .unsafeFlags([
-                    "/opt/homebrew/opt/hdf5/lib/libhdf5.a",
-                    "/opt/homebrew/lib/libsz.a",
-                    "/opt/homebrew/lib/libaec.a",
-                    "-lz", "-lm"
-                ])
-            ]),
+            exclude: ["CHDF5", "HDF5Kit.h"]),
         .testTarget(
             name: "HDF5KitTests",
             dependencies: ["HDF5Kit"]),

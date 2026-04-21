@@ -39,13 +39,22 @@ func expectHDF5Errors<T>(
 
     #expect(!messages.isEmpty, "Expected HDF5 to emit at least one diagnostic")
     for expectedMessage in expectedMessages {
+        let normalizedExpectedMessage = normalizeHDF5Diagnostic(expectedMessage)
         #expect(
-            messages.contains { $0.localizedCaseInsensitiveContains(expectedMessage) },
+            messages.contains { message in
+                normalizeHDF5Diagnostic(message).contains(normalizedExpectedMessage)
+            },
             "Expected HDF5 diagnostic containing '\(expectedMessage)', got: \(messages.joined(separator: " | "))"
         )
     }
 
     return try result.get()
+}
+
+private func normalizeHDF5Diagnostic(_ message: String) -> String {
+    message
+        .lowercased()
+        .filter { !$0.isWhitespace }
 }
 
 @HDF5Actor

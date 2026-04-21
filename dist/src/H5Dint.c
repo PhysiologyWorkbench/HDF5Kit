@@ -2182,7 +2182,7 @@ H5D_mult_refresh_reopen(H5D_t *dataset, hid_t dxpl_id)
 	    HGOTO_ERROR(H5E_DATASET, H5E_CANTCOPY, FAIL, "can't cache dataspace info")
     
 	if(H5O_msg_reset(H5O_LAYOUT_ID, &dataset->shared->layout) < 0)
-	    HGOTO_ERROR(H5E_DATASET, H5E_CANTRESET, NULL, "unable to reset layout info")
+	    HGOTO_ERROR(H5E_DATASET, H5E_CANTRESET, FAIL, "unable to reset layout info")
 
 	/* Re-load layout message info */
 	if(NULL == H5O_msg_read(&(dataset->oloc), H5O_LAYOUT_ID, &(dataset->shared->layout), dxpl_id))
@@ -3745,4 +3745,3 @@ done:
 
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5D__refresh() */
-

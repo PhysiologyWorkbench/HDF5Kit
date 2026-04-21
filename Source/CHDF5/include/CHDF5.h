@@ -1,7 +1,7 @@
 #ifndef CHDF5_h
 #define CHDF5_h
 
-#include "/opt/homebrew/opt/hdf5/include/hdf5.h"
+#include "../../../dist/src/hdf5.h"
 
 static inline hid_t HDF5Kit_H5T_NATIVE_LONG(void) { return H5T_NATIVE_LONG_g; }
 static inline hid_t HDF5Kit_H5T_NATIVE_ULONG(void) { return H5T_NATIVE_ULONG_g; }
