@@ -96,8 +96,10 @@ extension GroupType {
         if T.self == String.self {
             return createStringDataset(name, dataspace: dataspace) as? TypedDataset<T>
         }
-        let datasetID = name.withCString{ name in
-            return H5Dcreate2(id, name, T.hdf5Type.rawValue, dataspace.id, 0, 0, 0)
+        let datasetID = withUnsafeID { groupID in
+            name.withCString { name in
+                H5Dcreate2(groupID, name, T.hdf5Type.rawValue, dataspace.id, 0, 0, 0)
+            }
         }
         guard datasetID >= 0 else { return nil }
         return TypedDataset<T>(id: datasetID)
@@ -110,8 +112,15 @@ extension GroupType {
         }
         precondition(dataspace.dims.count == chunkDimensions.count)
 
-        let plist = H5Pcreate(H5P_CLS_DATASET_CREATE_ID_g)
-        H5Pset_char_encoding(plist, H5T_CSET_UTF8)
+        let linkCreationPropertyList = H5Pcreate(HDF5Kit_H5P_CLS_LINK_CREATE_ID())
+        guard linkCreationPropertyList >= 0 else { return nil }
+        defer {
+            H5Pclose(linkCreationPropertyList)
+        }
+        guard H5Pset_char_encoding(linkCreationPropertyList, H5T_CSET_UTF8) >= 0 else { return nil }
+
+        let plist = H5Pcreate(HDF5Kit_H5P_CLS_DATASET_CREATE_ID())
+        guard plist >= 0 else { return nil }
         let chunkDimensions64 = chunkDimensions.map({ hsize_t(bitPattern: hssize_t($0)) })
         chunkDimensions64.withUnsafeBufferPointer { (pointer) -> Void in
             H5Pset_chunk(plist, Int32(chunkDimensions.count), pointer.baseAddress)
@@ -123,8 +132,10 @@ extension GroupType {
             H5Pclose(plist)
         }
 
-        let datasetID = name.withCString{ name in
-            return H5Dcreate2(id, name, T.hdf5Type.rawValue, dataspace.id, 0, plist, 0)
+        let datasetID = withUnsafeID { groupID in
+            name.withCString { name in
+                H5Dcreate2(groupID, name, T.hdf5Type.rawValue, dataspace.id, linkCreationPropertyList, plist, 0)
+            }
         }
         guard datasetID >= 0 else { return nil }
         return TypedDataset<T>(id: datasetID)
@@ -151,8 +162,10 @@ extension GroupType {
         if T.self == String.self {
             return openStringDataset(name) as? TypedDataset<T>
         }
-        let datasetID = name.withCString{ name in
-            return H5Dopen2(id, name, 0)
+        let datasetID = withUnsafeID { groupID in
+            name.withCString { name in
+                H5Dopen2(groupID, name, 0)
+            }
         }
         guard datasetID >= 0 else {
             return nil

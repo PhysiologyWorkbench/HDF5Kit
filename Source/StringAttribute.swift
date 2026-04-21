@@ -130,8 +130,10 @@ extension AttributeHost {
             return nil
         }
         let dataspace = Dataspace(dims: [1])
-        let attributeID = name.withCString { name in
-            return H5Acreate2(id, name, datatype.id, dataspace.id, 0, 0)
+        let attributeID = withUnsafeID { objectID in
+            name.withCString { name in
+                H5Acreate2(objectID, name, datatype.id, dataspace.id, 0, 0)
+            }
         }
         guard attributeID >= 0 else { return nil }
         return StringAttribute(id: attributeID)
@@ -141,8 +143,10 @@ extension AttributeHost {
     public func createFixedStringAttribute(_ name: String, size: Int) -> StringAttribute? {
         let datatype = Datatype(dataClass: .string, size: size)
         let dataspace = Dataspace(dims: [1])
-        let attributeID = name.withCString { name in
-            return H5Acreate2(id, name, datatype.id, dataspace.id, 0, 0)
+        let attributeID = withUnsafeID { objectID in
+            name.withCString { name in
+                H5Acreate2(objectID, name, datatype.id, dataspace.id, 0, 0)
+            }
         }
         guard attributeID >= 0 else { return nil }
         return StringAttribute(id: attributeID)

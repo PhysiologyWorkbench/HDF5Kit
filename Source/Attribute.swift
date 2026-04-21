@@ -10,17 +10,25 @@
 
 @HDF5Actor
 open class Attribute {
-    nonisolated(unsafe) public internal(set) var id: hid_t = -1
+    private let rawID: hid_t
 
-    public init(id: hid_t) {
+    var id: hid_t {
+        rawID
+    }
+
+    public func withUnsafeID<Result>(_ body: (hid_t) throws -> Result) rethrows -> Result {
+        try body(rawID)
+    }
+
+    init(id: hid_t) {
         precondition(id >= 0, "Object ID needs to be non-negative")
-        self.id = id
+        rawID = id
     }
 
     deinit {
         HDF5Actor.runSynchronously {
-            if id >= 0 && H5Iis_valid(id) > 0 {
-                H5Aclose(id)
+            if rawID >= 0 && H5Iis_valid(rawID) > 0 {
+                H5Aclose(rawID)
             }
         }
     }

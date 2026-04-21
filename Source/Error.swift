@@ -19,6 +19,7 @@ public enum HDF5Error: Swift.Error, CustomStringConvertible {
     }
 
     /// Captures the current HDF5 error stack and returns an HDF5Error.
+    @HDF5Actor
     static func lastError() -> HDF5Error {
         var messages = [String]()
 
@@ -46,11 +47,55 @@ public enum HDF5Error: Swift.Error, CustomStringConvertible {
             return .ioError(description: messages.joined(separator: "\n"))
         }
     }
+
+    @HDF5Actor
+    static func captureAutomaticErrorMessages<T>(during body: () throws -> T) -> (Result<T, Swift.Error>, [String]) {
+        var previousCallback: H5E_auto2_t?
+        var previousData: UnsafeMutableRawPointer?
+        var capturedMessages = [String]()
+
+        H5Eget_auto2(0, &previousCallback, &previousData)
+        let result = withUnsafeMutablePointer(to: &capturedMessages) { messagesPointer in
+            H5Eset_auto2(0, HDF5ErrorCaptureCallbacks.captureErrorStack, messagesPointer)
+            defer {
+                H5Eset_auto2(0, previousCallback, previousData)
+            }
+
+            do {
+                return Result<T, Swift.Error>.success(try body())
+            } catch {
+                return Result<T, Swift.Error>.failure(error)
+            }
+        }
+
+        return (result, capturedMessages)
+    }
     
     /// Silences the automatic HDF5 error printing to stderr.
+    @HDF5Actor
     public static func silence() {
         // H5E_DEFAULT is usually 0. In some versions it's H5E_DEFAULT_g.
         // We use 0 directly if the constant is not available.
         H5Eset_auto2(0, nil, nil)
+    }
+}
+
+private enum HDF5ErrorCaptureCallbacks {
+    static let captureErrorStack: H5E_auto2_t = { errorStack, data in
+        H5Ewalk2(errorStack, H5E_WALK_UPWARD, HDF5ErrorCaptureCallbacks.captureErrorMessage, data)
+        return 0
+    }
+
+    static let captureErrorMessage: H5E_walk2_t = { _, errorPointer, data in
+        guard let error = errorPointer?.pointee,
+              let data else {
+            return 0
+        }
+
+        let messages = data.assumingMemoryBound(to: [String].self)
+        let message = String(cString: error.desc)
+        let functionName = String(cString: error.func_name)
+        messages.pointee.append("\(functionName): \(message)")
+        return 0
     }
 }

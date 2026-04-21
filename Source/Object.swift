@@ -10,28 +10,36 @@
 
 @HDF5Actor
 open class Object {
-    nonisolated(unsafe) public internal(set) var id: hid_t = -1
+    private let rawID: hid_t
 
-    public init(id: hid_t) {
+    var id: hid_t {
+        rawID
+    }
+
+    public func withUnsafeID<Result>(_ body: (hid_t) throws -> Result) rethrows -> Result {
+        try body(rawID)
+    }
+
+    init(id: hid_t) {
         precondition(id >= 0, "Object ID needs to be non-negative")
-        self.id = id
+        rawID = id
     }
 
     deinit {
         HDF5Actor.runSynchronously {
-            guard id >= 0 && H5Iis_valid(id) > 0 else { return }
-            let type = H5Iget_type(id)
+            guard rawID >= 0 && H5Iis_valid(rawID) > 0 else { return }
+            let type = H5Iget_type(rawID)
             switch type {
             case H5I_FILE:
-                H5Fclose(id)
+                H5Fclose(rawID)
             case H5I_GROUP:
-                H5Gclose(id)
+                H5Gclose(rawID)
             case H5I_DATASET:
-                H5Dclose(id)
+                H5Dclose(rawID)
             case H5I_DATATYPE:
-                H5Tclose(id)
+                H5Tclose(rawID)
             default:
-                H5Oclose(id)
+                H5Oclose(rawID)
             }
         }
     }
@@ -54,6 +62,7 @@ open class Object {
     }
 }
 
+@HDF5Actor
 public func == (lhs: Object, rhs: Object) -> Bool {
     return lhs.id == rhs.id
 }

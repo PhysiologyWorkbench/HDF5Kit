@@ -61,4 +61,49 @@ struct ConcurrencyTests {
             try await group.waitForAll()
         }
     }
+
+    @Test func testRawIDAccessUsesActorIsolatedClosure() async throws {
+        let filePath = await tempFilePath()
+        let file = await createFile(filePath)
+
+        let hasValidID = await file.withUnsafeID { $0 >= 0 }
+
+        #expect(hasValidID)
+    }
+
+    @Test func testConcurrentTeardownAndOperations() async throws {
+        let filePath = await tempFilePath()
+        let file = await createFile(filePath)
+        let datasetCount = 50
+        let dataSize = 16
+
+        try await withThrowingTaskGroup(of: Void.self) { group in
+            for index in 0..<datasetCount {
+                group.addTask {
+                    let dataspace = await Dataspace(dims: [dataSize])
+                    guard let dataset = await file.createIntDataset("transient_\(index)", dataspace: dataspace) else {
+                        Issue.record("Failed to create transient dataset \(index)")
+                        return
+                    }
+
+                    let values = Array(repeating: index, count: dataSize)
+                    try await dataset.write(values)
+                    let readValues: [Int] = try await dataset.read()
+                    #expect(readValues == values)
+                }
+            }
+
+            group.addTask {
+                for _ in 0..<datasetCount {
+                    _ = await file.objectNames()
+                    await Task.yield()
+                }
+            }
+
+            try await group.waitForAll()
+        }
+
+        let names = await file.objectNames()
+        #expect(names.filter { $0.hasPrefix("transient_") }.count == datasetCount)
+    }
 }

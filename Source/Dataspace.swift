@@ -10,10 +10,18 @@
 
 @HDF5Actor
 public class Dataspace {
-    nonisolated(unsafe) var id: hid_t
+    private let rawID: hid_t
+
+    var id: hid_t {
+        rawID
+    }
+
+    public func withUnsafeID<Result>(_ body: (hid_t) throws -> Result) rethrows -> Result {
+        try body(rawID)
+    }
 
     init(id: hid_t) {
-        self.id = id
+        rawID = id
         guard id >= 0 else {
             fatalError("Failed to create Dataspace")
         }
@@ -23,8 +31,8 @@ public class Dataspace {
 
     deinit {
         HDF5Actor.runSynchronously {
-            if id >= 0 && H5Iis_valid(id) > 0 {
-                H5Sclose(id)
+            if rawID >= 0 && H5Iis_valid(rawID) > 0 {
+                H5Sclose(rawID)
             }
         }
     }
@@ -40,7 +48,7 @@ public class Dataspace {
         let dims64 = dims.map({ hsize_t(bitPattern: hssize_t($0)) })
         let maxDims64 = maxDims?.map({ $0 < 0 ? UInt64(bitPattern: Int64(-1)) : hsize_t(bitPattern: hssize_t($0)) })
         
-        id = dims64.withUnsafeBufferPointer { (dimsPointer) in
+        let id = dims64.withUnsafeBufferPointer { (dimsPointer) in
             if let maxDims64 = maxDims64 {
                 return maxDims64.withUnsafeBufferPointer { (maxDimsPointer) in
                     return H5Screate_simple(Int32(dims.count), dimsPointer.baseAddress, maxDimsPointer.baseAddress)
@@ -48,6 +56,7 @@ public class Dataspace {
             }
             return H5Screate_simple(Int32(dims.count), dimsPointer.baseAddress, nil)
         }
+        rawID = id
         selectionDims = dims
     }
 

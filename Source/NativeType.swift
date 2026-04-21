@@ -55,19 +55,19 @@ public enum NativeType {
     /// The raw value of the NativeType
     public var rawValue: hid_t {
         switch self {
-        case .int: return H5ID(H5T_NATIVE_LONG_g)
-        case .uint: return H5ID(H5T_NATIVE_ULONG_g)
-        case .float: return H5ID(H5T_NATIVE_FLOAT_g)
-        case .double: return H5ID(H5T_NATIVE_DOUBLE_g)
-        case .int8: return H5ID(H5T_NATIVE_INT8_g)
-        case .uint8: return H5ID(H5T_NATIVE_UINT8_g)
-        case .int16: return H5ID(H5T_NATIVE_INT16_g)
-        case .uint16: return H5ID(H5T_NATIVE_UINT16_g)
-        case .int32: return H5ID(H5T_NATIVE_INT32_g)
-        case .uint32: return H5ID(H5T_NATIVE_UINT32_g)
-        case .int64: return H5ID(H5T_NATIVE_INT64_g)
-        case .uint64: return H5ID(H5T_NATIVE_UINT64_g)
-        case .opaque: return H5ID(H5T_NATIVE_OPAQUE_g)
+        case .int: return H5ID(HDF5Kit_H5T_NATIVE_LONG())
+        case .uint: return H5ID(HDF5Kit_H5T_NATIVE_ULONG())
+        case .float: return H5ID(HDF5Kit_H5T_NATIVE_FLOAT())
+        case .double: return H5ID(HDF5Kit_H5T_NATIVE_DOUBLE())
+        case .int8: return H5ID(HDF5Kit_H5T_NATIVE_INT8())
+        case .uint8: return H5ID(HDF5Kit_H5T_NATIVE_UINT8())
+        case .int16: return H5ID(HDF5Kit_H5T_NATIVE_INT16())
+        case .uint16: return H5ID(HDF5Kit_H5T_NATIVE_UINT16())
+        case .int32: return H5ID(HDF5Kit_H5T_NATIVE_INT32())
+        case .uint32: return H5ID(HDF5Kit_H5T_NATIVE_UINT32())
+        case .int64: return H5ID(HDF5Kit_H5T_NATIVE_INT64())
+        case .uint64: return H5ID(HDF5Kit_H5T_NATIVE_UINT64())
+        case .opaque: return H5ID(HDF5Kit_H5T_NATIVE_OPAQUE())
         }
     }
 

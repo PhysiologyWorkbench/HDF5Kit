@@ -97,6 +97,13 @@ if file.linkExists("shortcut") {
 
 ### Performance & Safety
 - **@HDF5Actor**: All C-API calls are now serialized via a global actor to ensure thread safety with the non-thread-safe libhdf5.
+- **Safe Raw Handle Access**: Advanced C interop should use `withUnsafeID { id in ... }` so raw HDF5 identifiers are only accessed while isolated to `@HDF5Actor`. The identifier is owned by HDF5Kit and must not be stored after the closure returns.
 - **Improved Error Handling**: Captures descriptive HDF5 error messages for better debugging.
 - **Modern Pointers**: Fully updated to use Swift 6 pointer paradigms.
 
+```swift
+let objectName = await dataset.withUnsafeID { datasetID in
+    // Call lower-level HDF5 C APIs here while serialized by HDF5Kit.
+    String(describing: datasetID)
+}
+```

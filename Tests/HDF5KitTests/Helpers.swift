@@ -4,8 +4,9 @@
 // terms governing use, modification, and redistribution, is contained in the
 // file LICENSE at the root of the source code distribution tree.
 
-import HDF5Kit
+@testable import HDF5Kit
 import Foundation
+import Testing
 
 @HDF5Actor
 func tempFilePath() -> String {
@@ -27,4 +28,34 @@ func openFile(_ filePath: String) -> File {
         fatalError("Failed to open file")
     }
     return file
+}
+
+@HDF5Actor
+func expectHDF5Errors<T>(
+    containing expectedMessages: [String],
+    during body: () throws -> T
+) throws -> T {
+    let (result, messages) = HDF5Error.captureAutomaticErrorMessages(during: body)
+
+    #expect(!messages.isEmpty, "Expected HDF5 to emit at least one diagnostic")
+    for expectedMessage in expectedMessages {
+        #expect(
+            messages.contains { $0.localizedCaseInsensitiveContains(expectedMessage) },
+            "Expected HDF5 diagnostic containing '\(expectedMessage)', got: \(messages.joined(separator: " | "))"
+        )
+    }
+
+    return try result.get()
+}
+
+@HDF5Actor
+func expectNoHDF5Errors<T>(during body: () throws -> T) throws -> T {
+    let (result, messages) = HDF5Error.captureAutomaticErrorMessages(during: body)
+
+    #expect(
+        messages.isEmpty,
+        "Expected no HDF5 diagnostics, got: \(messages.joined(separator: " | "))"
+    )
+
+    return try result.get()
 }

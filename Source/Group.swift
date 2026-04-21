@@ -10,7 +10,6 @@
 
 @HDF5Actor
 public protocol GroupType: AttributeHost {
-    var id: hid_t { get }
 }
 
 public class Group: Object, GroupType {

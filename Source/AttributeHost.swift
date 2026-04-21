@@ -10,5 +10,8 @@
 
 @HDF5Actor
 public protocol AttributeHost {
-    var id: hid_t { get }
+    /// Provides temporary access to the underlying HDF5 identifier while isolated to `HDF5Actor`.
+    ///
+    /// The identifier is owned by this wrapper. Do not store or use it after `body` returns.
+    func withUnsafeID<Result>(_ body: (hid_t) throws -> Result) rethrows -> Result
 }

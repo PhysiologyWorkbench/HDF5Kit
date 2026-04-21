@@ -34,8 +34,10 @@ extension AttributeHost {
         if T.self == String.self {
             return createStringAttribute(name) as? TypedAttribute<T>
         }
-        let attributeID = name.withCString{ name in
-            return H5Acreate2(id, name, T.hdf5Type.rawValue, dataspace.id, 0, 0)
+        let attributeID = withUnsafeID { objectID in
+            name.withCString { name in
+                H5Acreate2(objectID, name, T.hdf5Type.rawValue, dataspace.id, 0, 0)
+            }
         }
         guard attributeID >= 0 else { return nil }
         return TypedAttribute<T>(id: attributeID)
@@ -45,8 +47,10 @@ extension AttributeHost {
         if T.self == String.self {
             return openStringAttribute(name) as? TypedAttribute<T>
         }
-        let attributeID = name.withCString{ name in
-            return H5Aopen(id, name, 0)
+        let attributeID = withUnsafeID { objectID in
+            name.withCString { name in
+                H5Aopen(objectID, name, 0)
+            }
         }
         guard attributeID >= 0 else {
             return nil

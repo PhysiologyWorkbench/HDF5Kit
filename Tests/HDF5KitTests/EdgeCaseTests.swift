@@ -5,7 +5,7 @@
 // file LICENSE at the root of the source code distribution tree.
 
 import Testing
-import HDF5Kit
+@testable import HDF5Kit
 import Foundation
 
 @HDF5Actor
@@ -42,21 +42,36 @@ struct EdgeCaseTests {
         fileSpace.select(start: [15], stride: [1], count: [1], block: [1])
         
         let memSpace = Dataspace(dims: [1])
+        let pointer = UnsafeMutableRawPointer.allocate(byteCount: 8, alignment: 8)
+        defer {
+            pointer.deallocate()
+        }
         
         // This should throw because H5Dread will fail
         #expect(throws: HDF5Error.self) {
-            try dataset.read(into: UnsafeMutableRawPointer.allocate(byteCount: 8, alignment: 8), type: .int, memSpace: memSpace, fileSpace: fileSpace)
+            try expectHDF5Errors(containing: ["selection + offset not within extent"]) {
+                try dataset.read(into: pointer, type: .int, memSpace: memSpace, fileSpace: fileSpace)
+            }
         }
     }
 
-    @Test func testMissingObject() async {
+    @Test func testMissingObject() async throws {
         let filePath = tempFilePath()
         let file = createFile(filePath)
         
-        #expect(file.openGroup("non_existent") == nil)
-        #expect(file.openIntDataset("non_existent") == nil)
+        let missingGroup = try expectHDF5Errors(containing: ["object 'non_existent' doesn't exist"]) {
+            file.openGroup("non_existent")
+        }
+        #expect(missingGroup == nil)
+
+        let missingDataset = try expectHDF5Errors(containing: ["object 'non_existent' doesn't exist"]) {
+            file.openIntDataset("non_existent")
+        }
+        #expect(missingDataset == nil)
         
-        let invalidFile = File.open("/non/existent/path/file.h5", mode: .readOnly)
+        let invalidFile = try expectHDF5Errors(containing: ["No such file or directory"]) {
+            File.open("/non/existent/path/file.h5", mode: .readOnly)
+        }
         #expect(invalidFile == nil)
     }
     

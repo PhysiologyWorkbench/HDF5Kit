@@ -26,7 +26,7 @@ public enum DataClass: Int32 {
 
 
 @HDF5Actor
-public class Datatype : Object, Equatable {
+public class Datatype: Object, @HDF5Actor Equatable {
     override init(id: hid_t) {
         super.init(id: id)
     }
@@ -47,7 +47,7 @@ public class Datatype : Object, Equatable {
     public convenience init?(type: Any.Type) {
         let id: hid_t
         if type == String.self {
-            id = H5Tcopy(H5T_C_S1_g)
+            id = H5Tcopy(HDF5Kit_H5T_C_S1())
             H5Tset_cset(id, H5T_CSET_UTF8)
             H5Tset_size(id, -1)
         } else {
@@ -84,7 +84,7 @@ public class Datatype : Object, Equatable {
     }
 
     public class func createString(size: Int = -1) -> Datatype {
-        let id = H5Tcopy(H5T_C_S1_g)
+        let id = H5Tcopy(HDF5Kit_H5T_C_S1())
         H5Tset_cset(id, H5T_CSET_UTF8)
         let type = Datatype(id: id)
         type.size = size
@@ -138,6 +138,7 @@ public class Datatype : Object, Equatable {
     }
 }
 
+@HDF5Actor
 public func ==(lhs: Datatype, rhs: Datatype) -> Bool {
     return H5Tequal(lhs.id, rhs.id) > 0
 }
