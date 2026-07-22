@@ -154,6 +154,12 @@ extension AttributeHost {
 
     /// Opens a `String` attribute.
     public func openStringAttribute(_ name: String) -> StringAttribute? {
-        return openAttribute(name)
+        let attributeID = withUnsafeID { objectID in
+            name.withCString { name in
+                H5Aopen(objectID, name, 0)
+            }
+        }
+        guard attributeID >= 0 else { return nil }
+        return StringAttribute(id: attributeID)
     }
 }
