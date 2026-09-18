@@ -62,6 +62,25 @@ struct AttributeTests {
         let attribute = file.createStringAttribute("test")!
         try attribute.write("abc")
 
+        #expect(attribute.space.dims == [1])
+        let result: [String] = try attribute.read()
+        #expect(result == ["abc"])
+    }
+
+    /// A scalar string attribute - rank 0, not a one-element array. Readers of
+    /// formats that specify scalar text need the distinction: `h5py` hands a
+    /// one-element attribute back as an array.
+    @Test func writeReadScalarString() async throws {
+        let filePath = tempFilePath()
+        guard let file = File.create(filePath, mode: .truncate) else {
+            fatalError("Failed to create file")
+        }
+
+        let attribute = file.createStringAttribute("test", dataspace: Dataspace(dims: []))!
+        try attribute.write("abc")
+
+        #expect(attribute.space.ndims == 0)
+        #expect(attribute.space.size == 1)
         let result: [String] = try attribute.read()
         #expect(result == ["abc"])
     }

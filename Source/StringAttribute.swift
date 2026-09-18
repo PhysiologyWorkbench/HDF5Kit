@@ -124,12 +124,22 @@ extension TypedAttribute where T == String {
 }
 
 extension AttributeHost {
-    /// Creates a `String` attribute.
+    /// Creates a one-element `String` attribute.
     public func createStringAttribute(_ name: String) -> StringAttribute? {
+        createStringAttribute(name, dataspace: Dataspace(dims: [1]))
+    }
+
+    /// Creates a `String` attribute of a given shape.
+    ///
+    /// `Dataspace(dims: [])` gives a **scalar** attribute, which is what a
+    /// format that specifies scalar text -- NWB's `neurodata_type`, `namespace`
+    /// and `unit`, say -- requires: `h5py` reads a one-element attribute back as
+    /// an array rather than a string, and a reader comparing it to a string
+    /// then fails to match.
+    public func createStringAttribute(_ name: String, dataspace: Dataspace) -> StringAttribute? {
         guard let datatype = Datatype(type: String.self) else {
             return nil
         }
-        let dataspace = Dataspace(dims: [1])
         let attributeID = withUnsafeID { objectID in
             name.withCString { name in
                 H5Acreate2(objectID, name, datatype.id, dataspace.id, 0, 0)
