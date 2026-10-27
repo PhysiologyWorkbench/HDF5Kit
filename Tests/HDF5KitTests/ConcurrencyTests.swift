@@ -8,7 +8,60 @@ import Testing
 import HDF5Kit
 import Foundation
 
+@HDF5Actor private func actorRunsOnTheMainThread() -> Bool { pthread_main_np() != 0 }
+@HDF5Actor private func runSynchronouslyFromTheActor() -> Bool { HDF5Actor.runSynchronously { true } }
+/// Written by a job on the actor and read inside `runSynchronously`, which
+/// the queue orders after that job.
+nonisolated(unsafe) private var jobHasFinished = false
+/// Occupies the actor for a while, signalling when it has started.
+@HDF5Actor private func occupyTheActor(signalling started: DispatchSemaphore) {
+    started.signal()
+    Thread.sleep(forTimeInterval: 0.2)
+    jobHasFinished = true
+}
+
 struct ConcurrencyTests {
+
+    /// The actor's jobs run on its own queue, not on the thread that awaits
+    /// them: a main-actor caller's `await` does not put HDF5 on the main
+    /// thread.
+    @MainActor @Test func testActorJobsLeaveTheCallingThread() async {
+        #expect(pthread_main_np() != 0)
+        #expect(await actorRunsOnTheMainThread() == false)
+    }
+
+    /// `runSynchronously` from inside actor code — a `deinit` fired there —
+    /// runs inline and returns, rather than waiting on the queue it is on.
+    @Test(.timeLimit(.minutes(1))) func testRunSynchronouslyInsideTheActorDoesNotDeadlock() async {
+        #expect(await runSynchronouslyFromTheActor())
+    }
+
+    /// `runSynchronously` from outside actor code — a `deinit` fired on any
+    /// other thread — waits for the queue and returns.
+    @Test(.timeLimit(.minutes(1))) func testRunSynchronouslyFromOutsideTheActorReturns() {
+        #expect(HDF5Actor.runSynchronously { true })
+    }
+
+    /// `runSynchronously` from another thread waits for the job the actor is
+    /// running rather than running beside it: the exclusion the lock gave.
+    @Test(.timeLimit(.minutes(1))) func testRunSynchronouslyWaitsForTheRunningJob() {
+        let started = DispatchSemaphore(value: 0)
+        jobHasFinished = false
+        Task { @HDF5Actor in occupyTheActor(signalling: started) }
+        started.wait()
+        #expect(HDF5Actor.runSynchronously { jobHasFinished })
+    }
+
+    /// The last reference to a file dropped on the main actor closes it
+    /// there, through `runSynchronously` from off the queue, without a
+    /// deadlock; HDF5 then lets the file be truncated.
+    @MainActor @Test(.timeLimit(.minutes(1))) func testLastReferenceDroppedOnTheMainActorClosesTheFile() async {
+        let filePath = await tempFilePath()
+        var file: File? = await createFile(filePath)
+        file = nil
+        _ = file
+        #expect(await File.create(filePath, mode: .truncate) != nil)
+    }
 
     @Test func testConcurrentDatasetCreation() async throws {
         let filePath = await tempFilePath()
