@@ -10,14 +10,15 @@
 
 @HDF5Actor
 open class Object {
-    private let rawID: hid_t
+    private var rawID: hid_t
 
     var id: hid_t {
-        rawID
+        precondition(rawID >= 0, "HDF5 object used after close()")
+        return rawID
     }
 
     public func withUnsafeID<Result>(_ body: (hid_t) throws -> Result) rethrows -> Result {
-        try body(rawID)
+        try body(id)
     }
 
     init(id: hid_t) {
@@ -25,22 +26,48 @@ open class Object {
         rawID = id
     }
 
+    /// A handle still open when the last reference goes is closed here.
+    /// A `deinit` runs on whichever thread drops that reference, so here
+    /// the close goes through `runSynchronously` to reach the actor's executor;
+    /// an object already closed by `close()` is recognised before that and
+    /// takes no turn on it.
     deinit {
-        HDF5Actor.runSynchronously {
-            guard rawID >= 0 && H5Iis_valid(rawID) > 0 else { return }
-            let type = H5Iget_type(rawID)
-            switch type {
-            case H5I_FILE:
-                H5Fclose(rawID)
-            case H5I_GROUP:
-                H5Gclose(rawID)
-            case H5I_DATASET:
-                H5Dclose(rawID)
-            case H5I_DATATYPE:
-                H5Tclose(rawID)
-            default:
-                H5Oclose(rawID)
-            }
+        let id = rawID
+        guard id >= 0 else { return }
+        HDF5Actor.runSynchronously { _ = Self.closeHandle(id) }
+    }
+
+    /// Closes the handle now instead of leaving it to `deinit`.
+    ///
+    /// HDF5 keeps a file open for as long as any handle into it is open,
+    /// and `deinit` runs when and where the last reference happens to go.
+    /// So a caller that needs a file closed closes explicitly.
+    /// The object is then no longer usable. Closing twice does nothing.
+    /// Throws when HDF5 reports that the close failed, which for a file is
+    /// where a failed flush surfaces; the object is unusable either way.
+    public func close() throws {
+        let id = rawID
+        guard id >= 0 else { return }
+        rawID = -1
+        if Self.closeHandle(id) < 0 { throw HDF5Error.lastError() }
+    }
+
+    /// Closes `id` with the call its type needs and returns HDF5's result;
+    /// a handle HDF5 no longer knows counts as closed. Runs on the actor's
+    /// executor in both of its callers.
+    nonisolated private static func closeHandle(_ id: hid_t) -> herr_t {
+        guard H5Iis_valid(id) > 0 else { return 0 }
+        switch H5Iget_type(id) {
+        case H5I_FILE:
+            return H5Fclose(id)
+        case H5I_GROUP:
+            return H5Gclose(id)
+        case H5I_DATASET:
+            return H5Dclose(id)
+        case H5I_DATATYPE:
+            return H5Tclose(id)
+        default:
+            return H5Oclose(id)
         }
     }
 

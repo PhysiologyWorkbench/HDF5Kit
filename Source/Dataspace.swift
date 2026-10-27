@@ -10,14 +10,15 @@
 
 @HDF5Actor
 public class Dataspace {
-    private let rawID: hid_t
+    private var rawID: hid_t
 
     var id: hid_t {
-        rawID
+        precondition(rawID >= 0, "HDF5 dataspace used after close()")
+        return rawID
     }
 
     public func withUnsafeID<Result>(_ body: (hid_t) throws -> Result) rethrows -> Result {
-        try body(rawID)
+        try body(id)
     }
 
     init(id: hid_t) {
@@ -29,12 +30,22 @@ public class Dataspace {
         selectionDims = dims
     }
 
+    nonisolated private static func closeHandle(_ id: hid_t) -> herr_t {
+        guard H5Iis_valid(id) > 0 else { return 0 }
+        return H5Sclose(id)
+    }
+
     deinit {
-        HDF5Actor.runSynchronously {
-            if rawID >= 0 && H5Iis_valid(rawID) > 0 {
-                H5Sclose(rawID)
-            }
-        }
+        let id = rawID
+        guard id >= 0 else { return }
+        HDF5Actor.runSynchronously { _ = Self.closeHandle(id) }
+    }
+
+    public func close() throws {
+        let id = rawID
+        guard id >= 0 else { return }
+        rawID = -1
+        if Self.closeHandle(id) < 0 { throw HDF5Error.lastError() }
     }
 
     public func copy() -> Dataspace {
@@ -47,7 +58,7 @@ public class Dataspace {
     public init(dims: [Int], maxDims: [Int]? = nil) {
         let dims64 = dims.map({ hsize_t(bitPattern: hssize_t($0)) })
         let maxDims64 = maxDims?.map({ $0 < 0 ? UInt64(bitPattern: Int64(-1)) : hsize_t(bitPattern: hssize_t($0)) })
-        
+
         let id = dims64.withUnsafeBufferPointer { (dimsPointer) in
             if let maxDims64 = maxDims64 {
                 return maxDims64.withUnsafeBufferPointer { (maxDimsPointer) in
@@ -125,7 +136,7 @@ public class Dataspace {
                 }
             }
         }
-        
+
         let actualCount = count ?? [Int](repeating: 1, count: start.count)
         let actualBlock = block ?? [Int](repeating: 1, count: start.count)
         var selectionDims = [Int](repeating: 0, count: start.count)

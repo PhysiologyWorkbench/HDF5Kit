@@ -47,4 +47,19 @@ struct FileTests {
         let offset = dataset.offset
         #expect(offset == nil)
     }
+
+    /// `close()` closes a handle at once, a second call does nothing, and the
+    /// objects' `deinit` finds nothing left to close. HDF5 refuses to
+    /// truncate a file it still holds open.
+    @Test func closeReleasesTheFile() throws {
+        let filePath = tempFilePath()
+        let file = createFile(filePath)
+        let dataset = try #require(file.createDoubleDataset(datasetName, dataspace: Dataspace(dims: [width])))
+        try dataset.close()
+        try file.close()
+        try file.close()
+
+        #expect(File.create(filePath, mode: .truncate) != nil)
+        withExtendedLifetime((file, dataset)) {}
+    }
 }

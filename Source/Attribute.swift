@@ -10,14 +10,15 @@
 
 @HDF5Actor
 open class Attribute {
-    private let rawID: hid_t
+    private var rawID: hid_t
 
     var id: hid_t {
-        rawID
+        precondition(rawID >= 0, "HDF5 attribute used after close()")
+        return rawID
     }
 
     public func withUnsafeID<Result>(_ body: (hid_t) throws -> Result) rethrows -> Result {
-        try body(rawID)
+        try body(id)
     }
 
     init(id: hid_t) {
@@ -25,12 +26,22 @@ open class Attribute {
         rawID = id
     }
 
+    nonisolated private static func closeHandle(_ id: hid_t) -> herr_t {
+        guard H5Iis_valid(id) > 0 else { return 0 }
+        return H5Aclose(id)
+    }
+
     deinit {
-        HDF5Actor.runSynchronously {
-            if rawID >= 0 && H5Iis_valid(rawID) > 0 {
-                H5Aclose(rawID)
-            }
-        }
+        let id = rawID
+        guard id >= 0 else { return }
+        HDF5Actor.runSynchronously { _ = Self.closeHandle(id) }
+    }
+
+    public func close() throws {
+        let id = rawID
+        guard id >= 0 else { return }
+        rawID = -1
+        if Self.closeHandle(id) < 0 { throw HDF5Error.lastError() }
     }
 
     open var name: String {
